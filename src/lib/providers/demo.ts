@@ -28,10 +28,10 @@ export const runDemo = async (): Promise<void> => {
     {
       topic: "IA en educación",
       language: "es",
-      tone: Tone.Friendly,
+      tone: Tone.Informative,
       durationMinutes: 12,
       targetAudience: "docentes y estudiantes",
-      format: PodcastFormat.Narrative,
+      format: PodcastFormat.SoloHost,
     },
     ctx,
   );
@@ -43,10 +43,10 @@ export const runDemo = async (): Promise<void> => {
       outline: outlineResult.data,
       topic: "IA en educación",
       language: "es",
-      tone: Tone.Friendly,
+      tone: Tone.Informative,
       durationMinutes: 12,
       targetAudience: "docentes y estudiantes",
-      format: PodcastFormat.Narrative,
+      format: PodcastFormat.SoloHost,
     },
     ctx,
   );

@@ -8,7 +8,8 @@ import type {
 } from "../types";
 import type { LLMProvider } from "./LLMProvider";
 
-const estimateTokens = (text: string): number => Math.max(1, Math.ceil(text.length / 4));
+const estimateTokens = (text: string): number =>
+  Math.max(1, Math.ceil(text.length / 4));
 
 const buildOutline = (req: OutlineRequest): PodcastOutline => {
   const topic = req.topic.trim() || "Tema desconocido";
@@ -16,25 +17,33 @@ const buildOutline = (req: OutlineRequest): PodcastOutline => {
     title: `${topic}: una conversación ${req.format}`,
     sections: [
       {
-        heading: "Introducción",
+        heading: "Intro hook",
         bullets: [
-          `Presentación del tema: ${topic}.`,
-          `Por qué importa para ${req.targetAudience}.`,
+          `Abrimos con un dato sorprendente sobre ${topic}.`,
+          `Promesa de valor para ${req.targetAudience}.`,
         ],
       },
       {
-        heading: "Puntos clave",
+        heading: "Contexto esencial",
         bullets: [
-          `Idea principal sobre ${topic}.`,
-          "Ejemplos prácticos y contexto.",
-          "Consejos accionables para la audiencia.",
+          `Definición clara de ${topic}.`,
+          "Por qué es relevante hoy.",
+          "Errores comunes a evitar.",
+        ],
+      },
+      {
+        heading: "Ideas clave",
+        bullets: [
+          `Estrategia principal relacionada con ${topic}.`,
+          "Ejemplos y casos breves.",
+          "Consejos prácticos para aplicar.",
         ],
       },
       {
         heading: "Cierre",
         bullets: [
           "Resumen de aprendizajes.",
-          "Invitación a la reflexión y próximos pasos.",
+          "Próximos pasos recomendados.",
         ],
       },
     ],
@@ -43,18 +52,42 @@ const buildOutline = (req: OutlineRequest): PodcastOutline => {
 
 const buildScript = (outline: PodcastOutline, req: ScriptRequest): string => {
   const intro = `# ${outline.title}\n\n`;
+  const hook = `## Intro hook\n`;
+  const hookBody =
+    `Abrimos con una idea que capture la atención sobre ${req.topic}. ` +
+    `En menos de un minuto, la audiencia entiende por qué este tema importa para ${req.targetAudience}.\n\n`;
+
   const sections = outline.sections
+    .filter((section) => section.heading !== "Intro hook")
     .map((section) => {
       const bullets = section.bullets.map((bullet) => `- ${bullet}`).join("\n");
       return `## ${section.heading}\n${bullets}\n\n`;
     })
     .join("");
+
+  const transitions = `### Transiciones\n` +
+    `- Pasamos de la teoría a la práctica con un ejemplo.\n` +
+    `- Ahora conectamos estos puntos con acciones concretas.\n\n`;
+
+  const recap = `### Recap\n` +
+    `- Repasamos las ideas más importantes.\n` +
+    `- Destacamos el consejo principal para ${req.targetAudience}.\n\n`;
+
+  const outro =
+    `## Outro + CTA\n` +
+    `Gracias por escuchar. Si este episodio te ayudó, comparte el podcast y suscríbete para más temas como ${req.topic}.\n`;
+
   return (
     `${intro}` +
     `**Idioma:** ${req.language}\n` +
     `**Tono:** ${req.tone}\n` +
     `**Duración:** ${req.durationMinutes} minutos\n\n` +
-    sections
+    hook +
+    hookBody +
+    sections +
+    transitions +
+    recap +
+    outro
   ).trim();
 };
 
@@ -74,8 +107,7 @@ export const createMockLLMProvider = (): LLMProvider => {
         provider: "mock",
         model: "mock-llm",
       };
-      usage.totalTokens =
-        (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0);
+      usage.totalTokens = (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0);
       ctx?.onUsage?.(usage);
       return { data: outline, usage };
     },
@@ -92,8 +124,7 @@ export const createMockLLMProvider = (): LLMProvider => {
         provider: "mock",
         model: "mock-llm",
       };
-      usage.totalTokens =
-        (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0);
+      usage.totalTokens = (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0);
       ctx?.onUsage?.(usage);
       return { data: { markdown }, usage };
     },

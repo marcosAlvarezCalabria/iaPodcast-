@@ -1,14 +1,13 @@
 export enum Tone {
-  Friendly = "friendly",
-  Professional = "professional",
-  Energetic = "energetic",
-  Calm = "calm",
+  Informative = "informative",
+  Casual = "casual",
+  Funny = "funny",
+  Serious = "serious",
 }
 
 export enum PodcastFormat {
-  Interview = "interview",
-  Narrative = "narrative",
-  Roundtable = "roundtable",
+  SoloHost = "solo-host",
+  HostGuest = "host-guest",
 }
 
 export type PodcastOutline = {

@@ -1,64 +1,156 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { useRouter } from "next/navigation";
+
+const defaultForm = {
+  topic: "",
+  durationMinutes: 5,
+  language: "en",
+  tone: "informative",
+  targetAudience: "general",
+  format: "solo-host",
+};
 
 export default function Home() {
+  const router = useRouter();
+  const [form, setForm] = useState(defaultForm);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateField = (field: string, value: string | number) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error ?? "Failed to create job");
+      }
+      const { jobId } = (await response.json()) as { jobId: string };
+      router.push(`/job/${jobId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unexpected error");
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <main className="mx-auto flex w-full max-w-4xl flex-col gap-10 px-6 py-16">
+        <header className="space-y-3">
+          <p className="text-sm uppercase tracking-[0.3em] text-slate-400">
+            PodcastForge
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <h1 className="text-4xl font-semibold">
+            Genera podcasts completos desde un tema
+          </h1>
+          <p className="text-slate-300">
+            Genera guiones, capítulos y audio en minutos. El progreso se transmite
+            en tiempo real mientras el worker produce el episodio.
+          </p>
+        </header>
+
+        <form
+          onSubmit={onSubmit}
+          className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl"
+        >
+          <div className="grid gap-6 md:grid-cols-2">
+            <label className="flex flex-col gap-2 text-sm">
+              Tema
+              <input
+                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.topic}
+                onChange={(event) => updateField("topic", event.target.value)}
+                placeholder="IA aplicada a educación"
+                required
+              />
+            </label>
+
+            <label className="flex flex-col gap-2 text-sm">
+              Audiencia
+              <input
+                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.targetAudience}
+                onChange={(event) =>
+                  updateField("targetAudience", event.target.value)
+                }
+              />
+            </label>
+
+            <label className="flex flex-col gap-2 text-sm">
+              Duración (minutos)
+              <input
+                type="number"
+                min={2}
+                max={20}
+                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.durationMinutes}
+                onChange={(event) =>
+                  updateField("durationMinutes", Number(event.target.value))
+                }
+              />
+            </label>
+
+            <label className="flex flex-col gap-2 text-sm">
+              Idioma
+              <input
+                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.language}
+                onChange={(event) => updateField("language", event.target.value)}
+              />
+            </label>
+
+            <label className="flex flex-col gap-2 text-sm">
+              Tono
+              <select
+                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.tone}
+                onChange={(event) => updateField("tone", event.target.value)}
+              >
+                <option value="informative">Informative</option>
+                <option value="casual">Casual</option>
+                <option value="funny">Funny</option>
+                <option value="serious">Serious</option>
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-2 text-sm">
+              Formato
+              <select
+                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+                value={form.format}
+                onChange={(event) => updateField("format", event.target.value)}
+              >
+                <option value="solo-host">Solo host</option>
+                <option value="host-guest">Host + guest</option>
+              </select>
+            </label>
+          </div>
+
+          {error ? (
+            <p className="mt-4 text-sm text-red-300">{error}</p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="mt-6 inline-flex items-center justify-center rounded-full bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            {submitting ? "Creando job..." : "Generate"}
+          </button>
+        </form>
       </main>
     </div>
   );

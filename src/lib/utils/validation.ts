@@ -40,9 +40,9 @@ export const validateJobInput = (payload: unknown) => {
     errors.topic = ["Topic is required"];
   }
 
-  const durationMinutes = parseNumber(data.durationMinutes, 1);
-  if (durationMinutes < 1 || durationMinutes > 2) {
-    errors.durationMinutes = ["Duration must be between 1 and 2 minutes"];
+  const durationMinutes = parseNumber(data.durationMinutes, 0.5);
+  if (durationMinutes < 0.5 || durationMinutes > 10) {
+    errors.durationMinutes = ["Duration must be between 0.5 and 10 minutes"];
   }
 
   const language = isString(data.language) && data.language.trim()

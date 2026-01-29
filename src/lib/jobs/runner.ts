@@ -128,21 +128,27 @@ export const runJob = async (jobId: string): Promise<void> => {
       );
     }
 
+    logger.info("Starting audio mixing...", { bufferCount: audioBuffers.length, format: audioFormat });
     await setJobStatus(jobId, "RUNNING", "mix", 85, "Mixing audio");
 
     if (!audioFormat) {
       throw new Error("No audio generated");
     }
+
     const finalAudio = concatAudioBuffers(audioBuffers, audioFormat);
+    logger.info("Audio mixed successfully", { sizeBytes: finalAudio.length });
+
     const outputFilename = `audio.${audioExtension}`;
 
     // Upload Final Audio
+    logger.info("Uploading final audio to Supabase...", { filename: outputFilename });
     const audioUrl = await saveJobFile(
       jobId,
       outputFilename,
       finalAudio,
       audioFormat === "mp3" ? "audio/mpeg" : "audio/wav"
     );
+    logger.info("Audio upload complete", { url: audioUrl });
 
     const finishedAt = new Date().toISOString();
 

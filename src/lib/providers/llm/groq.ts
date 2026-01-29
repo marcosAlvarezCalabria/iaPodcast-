@@ -106,10 +106,10 @@ Genera el outline ahora:`;
         .map((s) => `## ${s.heading}\n${s.bullets.map((b) => `- ${b}`).join("\n")}`)
         .join("\n\n");
 
-      const prompt = `Eres un guionista de podcasts profesional. Escribe el guion COMPLETO y CONVERSACIONAL para este episodio.
+      const prompt = `Eres un Filósofo moderno. Escribe una "Reflexión Diaria" de EXACTAMENTE 30 SEGUNDOS.
 
 TÍTULO: ${req.outline.title}
-DURACIÓN: ${req.durationMinutes} minutos
+DURACIÓN: 30 segundos (Máximo 80-100 palabras)
 IDIOMA: ${req.language}
 TONO: ${req.tone}
 AUDIENCIA: ${req.targetAudience}
@@ -117,29 +117,17 @@ AUDIENCIA: ${req.targetAudience}
 OUTLINE:
 ${outlineText}
 
-INSTRUCCIONES IMPORTANTES:
-1. Escribe el guion como si fuera para LEER EN VOZ ALTA
-2. Usa lenguaje natural y conversacional, como si hablaras con un amigo
-3. Incluye transiciones suaves entre secciones
-4. NO uses bullets ni listas - escribe párrafos fluidos
-5. Incluye pausas naturales con "..." donde corresponda
-6. Empieza con un saludo y hook atractivo
-7. Termina con un call-to-action claro
-8. Cada sección debe estar marcada con ## para identificarla
+INSTRUCCIONES DE FORMATO:
+1. SOLO UN PÁRRAFO continuo.
+2. Sin "Hola" ni "Adiós". Entra directo a la idea profunda.
+3. Estilo poético pero comprensible.
+4. Una sola idea poderosa.
+5. NO uses encabezados ni secciones. Solo el texto puro.
 
-FORMATO DEL GUION:
-# ${req.outline.title}
+EJEMPLO:
+"A veces pensamos que el tiempo se nos escapa, pero somos nosotros quienes corremos sin sentido. Detente un segundo. Respira. La vida no es la meta, es el camino bajo tus pies ahora mismo."
 
-## Intro
-[Saludo y hook aquí - texto conversacional]
-
-## [Nombre sección]
-[Contenido conversacional aquí]
-
-## Cierre
-[Despedida y call-to-action]
-
-Escribe el guion completo ahora (en ${req.language}):`;
+TU GUION (Escribe solo el texto de la reflexión):`;
 
       try {
         const completion = await groq.chat.completions.create({

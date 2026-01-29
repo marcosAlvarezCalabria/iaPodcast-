@@ -58,7 +58,7 @@ export const runDemo = async (): Promise<void> => {
     {
       text: intro,
       language: "es",
-      format: "wav",
+      format: "mp3",
     },
     ctx,
   );

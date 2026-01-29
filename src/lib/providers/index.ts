@@ -9,3 +9,4 @@ export * from "./llm/openai";
 export * from "./llm/gemini";
 export * from "./tts/openai";
 export * from "./tts/gcp";
+export * from "./tts/edge";

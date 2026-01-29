@@ -9,13 +9,15 @@ import { createGeminiProvider } from "./llm/gemini";
 import { createMockLLMProvider } from "./llm/mock";
 import { createOpenAIProvider } from "./llm/openai";
 import type { TTSProvider } from "./tts/TTSProvider";
+import { createEdgeTTSProvider } from "./tts/edge";
 import { createGCPTTSProvider } from "./tts/gcp";
 import { createMockTTSProvider } from "./tts/mock";
 import { createOpenAITTSProvider } from "./tts/openai";
 
 export type Provider = LLMProvider | TTSProvider;
 
-export const DEFAULT_PROVIDER = "mock" as const;
+export const DEFAULT_LLM_PROVIDER = "mock" as const;
+export const DEFAULT_TTS_PROVIDER = "edge" as const;
 
 export const providersRegistry = {
   llm: {
@@ -24,6 +26,7 @@ export const providersRegistry = {
     gemini: createGeminiProvider,
   },
   tts: {
+    edge: createEdgeTTSProvider,
     mock: createMockTTSProvider,
     openai: createOpenAITTSProvider,
     gcp: createGCPTTSProvider,
@@ -138,7 +141,7 @@ const resolveTTSProvider = (name: string): TTSProvider => {
 export const getLLMProvider = (): LLMProvider => {
   const providerList = resolveProviderList(
     process.env.LLM_PROVIDER,
-    DEFAULT_PROVIDER,
+    DEFAULT_LLM_PROVIDER,
   );
   const providers = providerList.map(resolveLLMProvider);
   return providers.length === 1
@@ -149,7 +152,7 @@ export const getLLMProvider = (): LLMProvider => {
 export const getTTSProvider = (): TTSProvider => {
   const providerList = resolveProviderList(
     process.env.TTS_PROVIDER,
-    DEFAULT_PROVIDER,
+    DEFAULT_TTS_PROVIDER,
   );
   const providers = providerList.map(resolveTTSProvider);
   return providers.length === 1

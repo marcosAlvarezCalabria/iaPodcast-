@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { concatWavBuffers } from "../audio/mix";
+import { concatAudioBuffers } from "../audio/mix";
 import { getLLMProvider, getTTSProvider } from "../providers";
 import type { ProviderContext, Usage } from "../providers/types";
 import { estimateChapters, parseScriptSections } from "./chapters";
@@ -66,6 +66,8 @@ export const runJob = async (jobId: string): Promise<void> => {
 
     const sections = parseScriptSections(scriptMarkdown);
     const audioBuffers: Buffer[] = [];
+    let audioFormat: "wav" | "mp3" | null = null;
+    let audioExtension = "wav";
     const sectionDir = getJobPath(jobId, "sections");
     await fs.mkdir(sectionDir, { recursive: true });
 
@@ -75,12 +77,27 @@ export const runJob = async (jobId: string): Promise<void> => {
         {
           text: section.content,
           language: metadata.input.language,
-          format: "wav",
+          format: "mp3",
         },
         ctx,
       );
+      const resultFormat =
+        result.mimeType === "audio/wav"
+          ? "wav"
+          : result.mimeType === "audio/mpeg" || result.mimeType === "audio/mp3"
+            ? "mp3"
+            : null;
+      if (!resultFormat) {
+        throw new Error(`Unsupported audio mime type: ${result.mimeType}`);
+      }
+      if (!audioFormat) {
+        audioFormat = resultFormat;
+        audioExtension = audioFormat === "mp3" ? "mp3" : "wav";
+      } else if (audioFormat !== resultFormat) {
+        throw new Error("Audio format mismatch between sections");
+      }
       audioBuffers.push(result.audio);
-      const filename = `section_${String(index + 1).padStart(2, "0")}.wav`;
+      const filename = `section_${String(index + 1).padStart(2, "0")}.${audioExtension}`;
       await fs.writeFile(path.join(sectionDir, filename), result.audio);
 
       const percent = 60 + Math.round(((index + 1) / sections.length) * 20);
@@ -98,8 +115,12 @@ export const runJob = async (jobId: string): Promise<void> => {
 
     await setJobStatus(jobId, "RUNNING", "mix", 85, "Mixing audio");
 
-    const finalAudio = concatWavBuffers(audioBuffers);
-    await fs.writeFile(getJobPath(jobId, "audio.wav"), finalAudio);
+    if (!audioFormat) {
+      throw new Error("No audio generated");
+    }
+    const finalAudio = concatAudioBuffers(audioBuffers, audioFormat);
+    const outputFilename = `audio.${audioExtension}`;
+    await fs.writeFile(getJobPath(jobId, outputFilename), finalAudio);
 
     const finishedAt = new Date().toISOString();
 
@@ -114,7 +135,7 @@ export const runJob = async (jobId: string): Promise<void> => {
     await setJobOutputs(jobId, {
       script: "script.md",
       chapters: "chapters.json",
-      audio: "audio.wav",
+      audio: outputFilename,
       metadata: "metadata.json",
     });
 

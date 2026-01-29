@@ -88,3 +88,43 @@ export const concatWavBuffers = (buffers: Buffer[]): Buffer => {
     combined,
   );
 };
+
+const stripId3Header = (buffer: Buffer): Buffer => {
+  if (buffer.subarray(0, 3).toString("ascii") !== "ID3") {
+    return buffer;
+  }
+  if (buffer.length < 10) {
+    return buffer;
+  }
+  const sizeBytes = buffer.subarray(6, 10);
+  const size =
+    (sizeBytes[0] << 21) |
+    (sizeBytes[1] << 14) |
+    (sizeBytes[2] << 7) |
+    sizeBytes[3];
+  const headerSize = 10 + size;
+  return buffer.subarray(Math.min(headerSize, buffer.length));
+};
+
+export const concatMp3Buffers = (buffers: Buffer[]): Buffer => {
+  if (buffers.length === 0) {
+    throw new Error("No audio buffers to concat");
+  }
+
+  const [first, ...rest] = buffers;
+  const chunks = [first, ...rest.map(stripId3Header)];
+  return Buffer.concat(chunks);
+};
+
+export const concatAudioBuffers = (
+  buffers: Buffer[],
+  format: "wav" | "mp3",
+): Buffer => {
+  if (format === "wav") {
+    return concatWavBuffers(buffers);
+  }
+  if (format === "mp3") {
+    return concatMp3Buffers(buffers);
+  }
+  throw new Error(`Unsupported audio format: ${format}`);
+};

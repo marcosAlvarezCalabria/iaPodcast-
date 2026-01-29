@@ -3,9 +3,9 @@ import { readJobState, getJobPath } from "@/src/lib/jobs/storage";
 
 export const GET = async (
   _request: Request,
-  { params }: { params: { jobId: string } },
+  { params }: { params: Promise<{ jobId: string }> },
 ) => {
-  const { jobId } = params;
+  const { jobId } = await params;
   try {
     await readJobState(jobId);
     const content = await fs.readFile(getJobPath(jobId, "script.md"), "utf-8");

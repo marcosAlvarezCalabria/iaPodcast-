@@ -4,9 +4,9 @@ import { readJobState } from "@/src/lib/jobs/storage";
 
 export const GET = async (
   _request: NextRequest,
-  { params }: { params: { jobId: string } },
+  { params }: { params: Promise<{ jobId: string }> },
 ) => {
-  const { jobId } = params;
+  const { jobId } = await params;
   try {
     const state = await readJobState(jobId);
     return NextResponse.json({

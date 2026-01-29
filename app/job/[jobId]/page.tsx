@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 
 type JobStatus = {
@@ -24,8 +25,8 @@ type JobLog = {
   status?: string;
 };
 
-export default function JobPage({ params }: { params: { jobId: string } }) {
-  const { jobId } = params;
+export default function JobPage() {
+  const { jobId } = useParams<{ jobId: string }>();
   const [status, setStatus] = useState<JobStatus | null>(null);
   const [logs, setLogs] = useState<JobLog[]>([]);
   const [script, setScript] = useState<string | null>(null);

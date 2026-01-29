@@ -10,9 +10,9 @@ const formatSse = (data: unknown) => {
 
 export const GET = async (
   _request: Request,
-  { params }: { params: { jobId: string } },
+  { params }: { params: Promise<{ jobId: string }> },
 ) => {
-  const { jobId } = params;
+  const { jobId } = await params;
 
   let active = true;
   const stream = new ReadableStream({

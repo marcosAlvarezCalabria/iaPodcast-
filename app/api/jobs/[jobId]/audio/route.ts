@@ -9,14 +9,28 @@ export const GET = async (
   const { jobId } = await params;
   try {
     await readJobState(jobId);
-    const audioPath = getJobPath(jobId, "audio.wav");
+
+    // Try MP3 first (edge-tts), then WAV (mock)
+    let audioPath = getJobPath(jobId, "audio.mp3");
+    let mimeType = "audio/mpeg";
+    let extension = "mp3";
+
+    try {
+      await stat(audioPath);
+    } catch {
+      // Fallback to WAV
+      audioPath = getJobPath(jobId, "audio.wav");
+      mimeType = "audio/wav";
+      extension = "wav";
+    }
+
     const fileStat = await stat(audioPath);
     const stream = createReadStream(audioPath);
     return new Response(stream as unknown as BodyInit, {
       headers: {
-        "Content-Type": "audio/wav",
+        "Content-Type": mimeType,
         "Content-Length": fileStat.size.toString(),
-        "Content-Disposition": `inline; filename=podcast-${jobId}.wav`,
+        "Content-Disposition": `inline; filename=podcast-${jobId}.${extension}`,
       },
     });
   } catch (error) {

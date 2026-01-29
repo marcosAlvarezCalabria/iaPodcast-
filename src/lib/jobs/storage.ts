@@ -132,3 +132,10 @@ export const saveJobFile = async (
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return data.publicUrl;
 };
+
+// Helper: Get public URL for a file
+export const getJobFileUrl = (jobId: string, filename: string): string => {
+  const path = `${jobId}/${filename}`;
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+};

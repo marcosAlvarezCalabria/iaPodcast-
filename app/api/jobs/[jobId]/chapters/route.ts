@@ -1,20 +1,11 @@
-import { promises as fs } from "fs";
-import { getJobPath, readJobState } from "@/src/lib/jobs/storage";
+import { NextRequest, NextResponse } from "next/server";
+import { getJobFileUrl } from "@/src/lib/jobs/storage";
 
 export const GET = async (
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> },
 ) => {
   const { jobId } = await params;
-  try {
-    await readJobState(jobId);
-    const raw = await fs.readFile(getJobPath(jobId, "chapters.json"), "utf-8");
-    return new Response(raw, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  } catch (error) {
-    return new Response("Not found", { status: 404 });
-  }
+  const url = getJobFileUrl(jobId, "chapters.json");
+  return NextResponse.redirect(url);
 };

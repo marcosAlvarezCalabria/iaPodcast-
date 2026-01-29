@@ -3,8 +3,8 @@ type RateLimitEntry = {
   resetAt: number;
 };
 
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 20;
+const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+const RATE_LIMIT_MAX = 2;
 
 const store = new Map<string, RateLimitEntry>();
 

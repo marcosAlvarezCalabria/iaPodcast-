@@ -5,8 +5,4 @@ export * from "./llm/LLMProvider";
 export * from "./tts/TTSProvider";
 export * from "./llm/mock";
 export * from "./tts/mock";
-export * from "./llm/openai";
-export * from "./llm/gemini";
-export * from "./tts/openai";
-export * from "./tts/gcp";
 export * from "./tts/edge";

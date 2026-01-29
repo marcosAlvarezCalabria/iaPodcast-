@@ -5,15 +5,11 @@ import {
 } from "./errors";
 import type { ProviderFailure } from "./errors";
 import type { LLMProvider } from "./llm/LLMProvider";
-import { createGeminiProvider } from "./llm/gemini";
 import { createGroqProvider } from "./llm/groq";
 import { createMockLLMProvider } from "./llm/mock";
-import { createOpenAIProvider } from "./llm/openai";
 import type { TTSProvider } from "./tts/TTSProvider";
 import { createEdgeTTSProvider } from "./tts/edge";
-import { createGCPTTSProvider } from "./tts/gcp";
 import { createMockTTSProvider } from "./tts/mock";
-import { createOpenAITTSProvider } from "./tts/openai";
 
 export type Provider = LLMProvider | TTSProvider;
 
@@ -23,15 +19,11 @@ export const DEFAULT_TTS_PROVIDER = "edge" as const;
 export const providersRegistry = {
   llm: {
     mock: createMockLLMProvider,
-    openai: createOpenAIProvider,
-    gemini: createGeminiProvider,
     groq: createGroqProvider,
   },
   tts: {
     edge: createEdgeTTSProvider,
     mock: createMockTTSProvider,
-    openai: createOpenAITTSProvider,
-    gcp: createGCPTTSProvider,
   },
 } as const;
 
@@ -78,9 +70,7 @@ export const createFallbackProvider = <T extends Provider>(
       return async (...args: unknown[]) => {
         const failures: ProviderFailure[] = [];
         for (const provider of providers) {
-          const method = (provider as Record<string, unknown>)[
-            prop as string
-          ] as ((...methodArgs: unknown[]) => Promise<unknown>) | undefined;
+          const method = Reflect.get(provider, prop);
 
           if (typeof method !== "function") {
             failures.push({

@@ -3,8 +3,10 @@ type RateLimitEntry = {
   resetAt: number;
 };
 
-const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
-const RATE_LIMIT_MAX = 2;
+const isProduction = process.env.NODE_ENV === "production";
+
+const RATE_LIMIT_WINDOW_MS = isProduction ? 24 * 60 * 60 * 1000 : 60 * 1000; // 24h prod, 1m dev
+const RATE_LIMIT_MAX = isProduction ? 2 : 100; // 2 prod, 100 dev
 
 const store = new Map<string, RateLimitEntry>();
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { readJobState } from "@/src/lib/jobs/storage";
+import { readJobState, readJobMetadata } from "@/src/lib/jobs/storage";
 
 export const GET = async (
   _request: NextRequest,
@@ -9,17 +9,19 @@ export const GET = async (
   const { jobId } = await params;
   try {
     const state = await readJobState(jobId);
+    const metadata = await readJobMetadata(jobId);
     return NextResponse.json({
       status: state.status,
       step: state.step,
       percent: state.percent,
       error: state.error,
+      topic: metadata.input.topic,
       outputs: state.outputs
         ? {
-            script: `/api/jobs/${jobId}/script`,
-            chapters: `/api/jobs/${jobId}/chapters`,
-            audio: `/api/jobs/${jobId}/audio`,
-          }
+          script: `/api/jobs/${jobId}/script`,
+          chapters: `/api/jobs/${jobId}/chapters`,
+          audio: `/api/jobs/${jobId}/audio`,
+        }
         : undefined,
     });
   } catch (error) {

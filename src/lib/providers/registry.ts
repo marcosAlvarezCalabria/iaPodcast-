@@ -6,6 +6,7 @@ import {
 import type { ProviderFailure } from "./errors";
 import type { LLMProvider } from "./llm/LLMProvider";
 import { createGeminiProvider } from "./llm/gemini";
+import { createGroqProvider } from "./llm/groq";
 import { createMockLLMProvider } from "./llm/mock";
 import { createOpenAIProvider } from "./llm/openai";
 import type { TTSProvider } from "./tts/TTSProvider";
@@ -16,7 +17,7 @@ import { createOpenAITTSProvider } from "./tts/openai";
 
 export type Provider = LLMProvider | TTSProvider;
 
-export const DEFAULT_LLM_PROVIDER = "mock" as const;
+export const DEFAULT_LLM_PROVIDER = "groq" as const;
 export const DEFAULT_TTS_PROVIDER = "edge" as const;
 
 export const providersRegistry = {
@@ -24,6 +25,7 @@ export const providersRegistry = {
     mock: createMockLLMProvider,
     openai: createOpenAIProvider,
     gemini: createGeminiProvider,
+    groq: createGroqProvider,
   },
   tts: {
     edge: createEdgeTTSProvider,

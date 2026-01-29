@@ -9,30 +9,28 @@ import type {
 import type { LLMProvider } from "./LLMProvider";
 
 const getApiKey = (): string => {
-  const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  const key = process.env.GROQ_API_KEY;
   if (!key) {
     throw new ProviderConfigError(
-      "Missing GEMINI_API_KEY or GOOGLE_API_KEY environment variable",
-      { provider: "gemini" }
+      "Missing GROQ_API_KEY environment variable",
+      { provider: "groq" }
     );
   }
   return key;
 };
 
-export const createGeminiProvider = (): LLMProvider => {
+export const createGroqProvider = (): LLMProvider => {
   return {
-    name: () => "gemini",
+    name: () => "groq",
 
     async generateOutline(
       req: OutlineRequest,
       ctx?: ProviderContext
     ): Promise<LLMResult<PodcastOutline>> {
-      const { GoogleGenerativeAI } = await import("@google/generative-ai");
-      const apiKey = getApiKey();
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const Groq = (await import("groq-sdk")).default;
+      const groq = new Groq({ apiKey: getApiKey() });
 
-      ctx?.logger?.debug("gemini:generateOutline", { topic: req.topic });
+      ctx?.logger?.debug("groq:generateOutline", { topic: req.topic });
 
       const prompt = `Eres un productor de podcasts profesional. Genera un outline estructurado para un episodio de podcast.
 
@@ -62,8 +60,13 @@ El outline debe tener:
 Genera el outline ahora:`;
 
       try {
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
+        const completion = await groq.chat.completions.create({
+          messages: [{ role: "user", content: prompt }],
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.7,
+        });
+
+        const text = completion.choices[0]?.message?.content || "";
 
         // Parse JSON from response
         const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -77,15 +80,15 @@ Genera el outline ahora:`;
           data: outline,
           raw: text,
           usage: {
-            inputTokens: Math.round(prompt.length / 4),
-            outputTokens: Math.round(text.length / 4),
-            totalTokens: Math.round((prompt.length + text.length) / 4),
+            inputTokens: completion.usage?.prompt_tokens ?? 0,
+            outputTokens: completion.usage?.completion_tokens ?? 0,
+            totalTokens: completion.usage?.total_tokens ?? 0,
           },
         };
       } catch (error) {
         throw new ProviderCallError(
           error instanceof Error ? error.message : String(error),
-          { provider: "gemini", cause: error }
+          { provider: "groq", cause: error }
         );
       }
     },
@@ -94,12 +97,10 @@ Genera el outline ahora:`;
       req: ScriptRequest,
       ctx?: ProviderContext
     ): Promise<LLMResult<{ markdown: string }>> {
-      const { GoogleGenerativeAI } = await import("@google/generative-ai");
-      const apiKey = getApiKey();
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const Groq = (await import("groq-sdk")).default;
+      const groq = new Groq({ apiKey: getApiKey() });
 
-      ctx?.logger?.debug("gemini:generateScript", { title: req.outline.title });
+      ctx?.logger?.debug("groq:generateScript", { title: req.outline.title });
 
       const outlineText = req.outline.sections
         .map((s) => `## ${s.heading}\n${s.bullets.map((b) => `- ${b}`).join("\n")}`)
@@ -141,22 +142,28 @@ FORMATO DEL GUION:
 Escribe el guion completo ahora (en ${req.language}):`;
 
       try {
-        const result = await model.generateContent(prompt);
-        const markdown = result.response.text();
+        const completion = await groq.chat.completions.create({
+          messages: [{ role: "user", content: prompt }],
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.7,
+          max_tokens: 4000,
+        });
+
+        const markdown = completion.choices[0]?.message?.content || "";
 
         return {
           data: { markdown },
           raw: markdown,
           usage: {
-            inputTokens: Math.round(prompt.length / 4),
-            outputTokens: Math.round(markdown.length / 4),
-            totalTokens: Math.round((prompt.length + markdown.length) / 4),
+            inputTokens: completion.usage?.prompt_tokens ?? 0,
+            outputTokens: completion.usage?.completion_tokens ?? 0,
+            totalTokens: completion.usage?.total_tokens ?? 0,
           },
         };
       } catch (error) {
         throw new ProviderCallError(
           error instanceof Error ? error.message : String(error),
-          { provider: "gemini", cause: error }
+          { provider: "groq", cause: error }
         );
       }
     },

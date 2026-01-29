@@ -12,7 +12,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
-const BUCKET = "podcasts";
+const BUCKET = "PodcastApp";
 
 // Helper to upload JSON to Supabase
 export const writeJSON = async <T>(path: string, data: T): Promise<void> => {

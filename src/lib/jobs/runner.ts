@@ -1,18 +1,17 @@
-import { promises as fs } from "fs";
-import path from "path";
 import { concatAudioBuffers } from "../audio/mix";
 import { getLLMProvider, getTTSProvider } from "../providers";
 import type { ProviderContext, Usage } from "../providers/types";
 import { estimateChapters, parseScriptSections } from "./chapters";
 import {
-  getJobPath,
   readJobMetadata,
+  saveJobFile,
   setJobOutputs,
   setJobStatus,
   updateJobState,
   writeJSON,
+  // readJobState, // ensure state is fresh (removed unused)
 } from "./storage";
-import type { JobMetadata } from "./types";
+// import type { JobMetadata } from "./types"; (removed unused)
 
 const buildLogger = (jobId: string) => ({
   info: (message: string, meta?: Record<string, unknown>) =>
@@ -51,16 +50,26 @@ export const runJob = async (jobId: string): Promise<void> => {
 
     await setJobStatus(jobId, "RUNNING", "script", 30, "Drafting script");
 
-    const scriptResult = await llm.generateScript({
-      outline,
-      ...metadata.input,
-    }, ctx);
+    const scriptResult = await llm.generateScript(
+      {
+        outline,
+        ...metadata.input,
+      },
+      ctx,
+    );
 
     const scriptMarkdown = scriptResult.data.markdown;
-    await fs.writeFile(getJobPath(jobId, "script.md"), scriptMarkdown, "utf-8");
+    // Upload Script
+    const scriptUrl = await saveJobFile(jobId, "script.md", scriptMarkdown, "text/markdown");
 
     const chapters = estimateChapters(scriptMarkdown, metadata.input);
-    await writeJSON(getJobPath(jobId, "chapters.json"), chapters);
+    // Upload Chapters (via internal JSON helper)
+    // Note: chapters.json is handled by writeJSON in storage usually, but let's be explicit
+    // Actually storage.ts writeJSON handles the upload correctly now.
+    // We just need to make sure we use the public path logic if needed, but for internal state it's fine.
+    // However, chapters.json is an output.
+    // Let's use saveJobFile for outputs to get URLs if needed, or just writeJSON if it's data.
+    // For now, writeJSON is fine as it uploads to Supabase.
 
     await setJobStatus(jobId, "RUNNING", "tts", 60, "Synthesizing audio");
 
@@ -68,8 +77,8 @@ export const runJob = async (jobId: string): Promise<void> => {
     const audioBuffers: Buffer[] = [];
     let audioFormat: "wav" | "mp3" | null = null;
     let audioExtension = "wav";
-    const sectionDir = getJobPath(jobId, "sections");
-    await fs.mkdir(sectionDir, { recursive: true });
+
+    // No need to create directories in Supabase (it's object storage)
 
     for (let index = 0; index < sections.length; index += 1) {
       const section = sections[index];
@@ -97,20 +106,26 @@ export const runJob = async (jobId: string): Promise<void> => {
         throw new Error("Audio format mismatch between sections");
       }
       audioBuffers.push(result.audio);
-      const filename = `section_${String(index + 1).padStart(2, "0")}.${audioExtension}`;
-      await fs.writeFile(path.join(sectionDir, filename), result.audio);
+
+      // Upload Section Audio (Optional, good for debugging)
+      const filename = `sections/section_${String(index + 1).padStart(2, "0")}.${audioExtension}`;
+      await saveJobFile(jobId, filename, result.audio, result.mimeType);
 
       const percent = 60 + Math.round(((index + 1) / sections.length) * 20);
-      await updateJobState(jobId, {
-        step: "tts",
-        percent,
-        message: `Synthesized section ${index + 1} of ${sections.length}`,
-      }, {
-        step: "tts",
-        percent,
-        message: `Synthesized section ${index + 1} of ${sections.length}`,
-        ts: new Date().toISOString(),
-      });
+      await updateJobState(
+        jobId,
+        {
+          step: "tts",
+          percent,
+          message: `Synthesized section ${index + 1} of ${sections.length}`,
+        },
+        {
+          step: "tts",
+          percent,
+          message: `Synthesized section ${index + 1} of ${sections.length}`,
+          ts: new Date().toISOString(),
+        },
+      );
     }
 
     await setJobStatus(jobId, "RUNNING", "mix", 85, "Mixing audio");
@@ -120,7 +135,14 @@ export const runJob = async (jobId: string): Promise<void> => {
     }
     const finalAudio = concatAudioBuffers(audioBuffers, audioFormat);
     const outputFilename = `audio.${audioExtension}`;
-    await fs.writeFile(getJobPath(jobId, outputFilename), finalAudio);
+
+    // Upload Final Audio
+    const audioUrl = await saveJobFile(
+      jobId,
+      outputFilename,
+      finalAudio,
+      audioFormat === "mp3" ? "audio/mpeg" : "audio/wav"
+    );
 
     const finishedAt = new Date().toISOString();
 
@@ -130,13 +152,29 @@ export const runJob = async (jobId: string): Promise<void> => {
     };
     metadata.timings = { startedAt, finishedAt };
     metadata.usage = usageRecords;
-    await writeJSON(getJobPath(jobId, "metadata.json"), metadata);
+
+    // Save updated metadata
+    // We use the internal writeJSON which now uploads to Supabase
+    // To update metadata, we need to re-import writeJSON or use initJob logic? 
+    // storage.ts exports readJobMetadata but not explicitly writeJobMetadata helper, 
+    // but we can use generic writeJSON with the path.
+    // wait, storage.ts defines `initJob` which writes metadata. 
+    // Use generic writeJSON from storage.ts (need to export it or add helper)
+    // Looking at imports, writeJSON IS exported.
+    await writeJSON(`${jobId}/metadata.json`, metadata);
+    await writeJSON(`${jobId}/chapters.json`, chapters);
 
     await setJobOutputs(jobId, {
-      script: "script.md",
-      chapters: "chapters.json",
-      audio: outputFilename,
-      metadata: "metadata.json",
+      script: scriptUrl, // Use public URL or path? The frontend usually expects a relative path or URL.
+      // storage.ts setJobOutputs updates state.outputs.
+      // API currently returns paths like `/api/jobs/...`. 
+      // If we switch to Supabase, we should probably return direct URLs or keep the API proxy.
+      // Netlify Functions have 10s timeout, so proxying huge files is risky. 
+      // Direct Supabase URLs are better.
+      // Let's store the DIRECT public URLs in the state outputs.
+      chapters: await saveJobFile(jobId, "chapters.json", JSON.stringify(chapters, null, 2), "application/json"),
+      audio: audioUrl,
+      metadata: await saveJobFile(jobId, "metadata.json", JSON.stringify(metadata, null, 2), "application/json"),
     });
 
     await setJobStatus(jobId, "DONE", "finalize", 100, "Job complete");

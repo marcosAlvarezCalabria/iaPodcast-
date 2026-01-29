@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.93.3",
     "groq-sdk": "^0.37.0",
     "msedge-tts": "^2.0.4",
     "next": "16.1.6",

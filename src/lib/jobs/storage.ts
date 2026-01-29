@@ -1,42 +1,43 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { createClient } from "@supabase/supabase-js";
 import type { JobMetadata, JobState, JobStatus, JobLog, JobOutputs } from "./types";
 
-const resolveOutputRoot = (): string =>
-  process.env.OUTPUT_DIR
-    ? path.resolve(process.env.OUTPUT_DIR)
-    : path.join(process.cwd(), "outputs");
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-export const getOutputRoot = (): string => resolveOutputRoot();
+// Initialize Supabase Client with Service Role for backend rights
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});
 
-export const getJobDir = (jobId: string): string =>
-  path.join(getOutputRoot(), jobId);
+const BUCKET = "podcasts";
 
-export const getJobPath = (jobId: string, filename: string): string =>
-  path.join(getJobDir(jobId), filename);
+// Helper to upload JSON to Supabase
+export const writeJSON = async <T>(path: string, data: T): Promise<void> => {
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, JSON.stringify(data, null, 2), {
+      contentType: "application/json",
+      upsert: true,
+    });
 
-export const ensureDir = async (dir: string): Promise<void> => {
-  await fs.mkdir(dir, { recursive: true });
+  if (error) throw new Error(`Supabase Write Error (${path}): ${error.message}`);
 };
 
-export const ensureOutputRoot = async (): Promise<void> => {
-  await ensureDir(getOutputRoot());
+// Helper to read JSON from Supabase
+const readJSON = async <T>(path: string): Promise<T> => {
+  const { data, error } = await supabase.storage.from(BUCKET).download(path);
+
+  if (error) throw new Error(`Supabase Read Error (${path}): ${error.message}`);
+
+  const text = await data.text();
+  return JSON.parse(text) as T;
 };
 
-export const writeJSON = async <T>(filePath: string, data: T): Promise<void> => {
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
-};
-
-export const readJSON = async <T>(filePath: string): Promise<T> => {
-  const raw = await fs.readFile(filePath, "utf-8");
-  return JSON.parse(raw) as T;
-};
-
+// Initialize a new job
 export const initJob = async (jobId: string, metadata: JobMetadata): Promise<JobState> => {
-  await ensureOutputRoot();
-  const jobDir = getJobDir(jobId);
-  await ensureDir(jobDir);
-
   const now = new Date().toISOString();
   const state: JobState = {
     jobId,
@@ -56,19 +57,22 @@ export const initJob = async (jobId: string, metadata: JobMetadata): Promise<Job
     updatedAt: now,
   };
 
-  await writeJSON(getJobPath(jobId, "metadata.json"), metadata);
-  await writeJSON(getJobPath(jobId, "state.json"), state);
+  await writeJSON(`${jobId}/metadata.json`, metadata);
+  await writeJSON(`${jobId}/state.json`, state);
   return state;
 };
 
+// Read job state
 export const readJobState = async (jobId: string): Promise<JobState> => {
-  return readJSON<JobState>(getJobPath(jobId, "state.json"));
+  return readJSON<JobState>(`${jobId}/state.json`);
 };
 
+// Read job metadata
 export const readJobMetadata = async (jobId: string): Promise<JobMetadata> => {
-  return readJSON<JobMetadata>(getJobPath(jobId, "metadata.json"));
+  return readJSON<JobMetadata>(`${jobId}/metadata.json`);
 };
 
+// Update job state
 export const updateJobState = async (
   jobId: string,
   patch: Partial<JobState>,
@@ -83,7 +87,7 @@ export const updateJobState = async (
     logs,
     updatedAt,
   };
-  await writeJSON(getJobPath(jobId, "state.json"), next);
+  await writeJSON(`${jobId}/state.json`, next);
   return next;
 };
 
@@ -105,4 +109,26 @@ export const setJobOutputs = async (
   outputs: JobOutputs,
 ): Promise<JobState> => {
   return updateJobState(jobId, { outputs });
+};
+
+// New Helper: Upload generic files (mp3, md)
+export const saveJobFile = async (
+  jobId: string,
+  filename: string, // e.g. "podcast.mp3"
+  content: string | Buffer | Blob,
+  contentType: string,
+): Promise<string> => {
+  const path = `${jobId}/${filename}`;
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, content, {
+      contentType,
+      upsert: true,
+    });
+
+  if (error) throw new Error(`Supabase Upload Error (${filename}): ${error.message}`);
+
+  // Return public URL
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  return data.publicUrl;
 };

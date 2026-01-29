@@ -16,15 +16,9 @@ export const GET = async (
       percent: state.percent,
       error: state.error,
       topic: metadata.input.topic,
-      outputs: state.outputs
-        ? {
-          script: `/api/jobs/${jobId}/script`,
-          chapters: `/api/jobs/${jobId}/chapters`,
-          audio: `/api/jobs/${jobId}/audio`,
-        }
-        : undefined,
+      outputs: state.outputs, // Return direct Supabase public URLs set by the runner
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
   }
 };

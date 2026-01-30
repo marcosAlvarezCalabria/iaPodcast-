@@ -6,3 +6,4 @@ export * from "./tts/TTSProvider";
 export * from "./llm/mock";
 export * from "./tts/mock";
 export * from "./tts/edge";
+export * from "./tts/cloudflare";

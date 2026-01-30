@@ -8,6 +8,7 @@ import type { LLMProvider } from "./llm/LLMProvider";
 import { createGroqProvider } from "./llm/groq";
 import { createMockLLMProvider } from "./llm/mock";
 import type { TTSProvider } from "./tts/TTSProvider";
+import { createCloudflareTTSProvider } from "./tts/cloudflare";
 import { createEdgeTTSProvider } from "./tts/edge";
 import { createMockTTSProvider } from "./tts/mock";
 
@@ -24,6 +25,7 @@ export const providersRegistry = {
   tts: {
     edge: createEdgeTTSProvider,
     mock: createMockTTSProvider,
+    cloudflare: createCloudflareTTSProvider,
   },
 } as const;
 

@@ -29,8 +29,8 @@ export const GET = async (
         try {
           const state = await readJobState(jobId);
 
-          // Start the job if it's pending and not already running
-          if (state.status === "PENDING" && !jobStarted && !runningJobs.has(jobId)) {
+          // Start the job if it's queued and not already running
+          if (state.status === "QUEUED" && !jobStarted && !runningJobs.has(jobId)) {
             jobStarted = true;
             runningJobs.add(jobId);
             console.log(`[SSE] Starting job ${jobId}`);

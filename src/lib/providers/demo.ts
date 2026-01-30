@@ -1,6 +1,6 @@
 import { getLLMProvider, getTTSProvider } from "./registry";
 import type { Logger, ProviderContext } from "./types";
-import { PodcastFormat, Tone } from "./types";
+import { ContentType, PodcastFormat, Tone } from "./types";
 
 const consoleLogger: Logger = {
   info: (message, meta) => console.info(message, meta ?? {}),
@@ -29,6 +29,7 @@ export const runDemo = async (): Promise<void> => {
       topic: "IA en educación",
       language: "es",
       tone: Tone.Informative,
+      contentType: ContentType.Explanation,
       durationMinutes: 12,
       targetAudience: "docentes y estudiantes",
       format: PodcastFormat.SoloHost,
@@ -44,6 +45,7 @@ export const runDemo = async (): Promise<void> => {
       topic: "IA en educación",
       language: "es",
       tone: Tone.Informative,
+      contentType: ContentType.Explanation,
       durationMinutes: 12,
       targetAudience: "docentes y estudiantes",
       format: PodcastFormat.SoloHost,

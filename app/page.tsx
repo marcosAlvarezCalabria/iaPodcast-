@@ -3,7 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 
 type Language = "es" | "en" | "fr";
+type ContentType = "reflection" | "summary" | "story" | "explanation";
 type AppState = "form" | "generating" | "done" | "error";
+
+const contentTypes: { value: ContentType; label: string; icon: string }[] = [
+  { value: "reflection", label: "Reflection", icon: "psychology" },
+  { value: "summary", label: "Summary", icon: "summarize" },
+  { value: "story", label: "Story", icon: "auto_stories" },
+  { value: "explanation", label: "Explanation", icon: "school" },
+];
 
 type JobLog = {
   step: string;
@@ -18,6 +26,7 @@ const defaultForm = {
   topic: "",
   durationMinutes: 1,
   language: "es" as Language,
+  contentType: "reflection" as ContentType,
   tone: "informative",
   targetAudience: "general",
   format: "solo-host",
@@ -162,7 +171,7 @@ export default function Home() {
 
         <div className="flex flex-col items-center">
           <span className="text-white/70 text-[10px] font-bold uppercase tracking-widest">
-            {appState === "form" ? "Audio Creator" : appState === "generating" ? "Generating..." : appState === "done" ? "Now Playing" : "Error"}
+            {appState === "form" ? "AI Voice Creator" : appState === "generating" ? "Creating..." : appState === "done" ? "Now Playing" : "Error"}
           </span>
         </div>
 
@@ -185,14 +194,13 @@ export default function Home() {
         {appState === "form" && (
           <>
             <div className="clay-card w-full p-5 flex flex-col items-center gap-4 border-b-8 border-black/5">
-              {/* Microphone Icon */}
+              {/* AI Voice Icon */}
               <div className="relative w-28 h-28 flex items-center justify-center bg-gradient-to-br from-white to-gray-50 rounded-full shadow-lg border border-gray-100">
-                <div
-                  className="w-24 h-24 rounded-full bg-cover bg-center"
-                  style={{
-                    backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAJDEv7dT11P2hF6luD6LnQQ17DUWrzDr0sPK3YMQT-ensAKnXhGFr6YwauqxRaltWhy2VUTlsWbjlwVVfd8e-bv963a_tIVmjx582rNN78O9gulVNPJoLHLdoJeHkdbekwIIvWxMBz52cOJz8zLO4zIh-SY2jhPzGaKInonKbzM2e2_2ak9NcDfmQEPDmAPrhGjoyhVPbJIGysFsGPLgO_8qJ9r26W_bdjL_nLtpn-bg8wOkoYnpu-PFdj0WenTjwzUzQYev9xm80")',
-                  }}
-                />
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#fbb751] to-[#f59e0b] flex items-center justify-center">
+                  <span className="material-symbols-outlined text-5xl text-white" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    graphic_eq
+                  </span>
+                </div>
               </div>
 
               {/* Input */}
@@ -200,7 +208,7 @@ export default function Home() {
                 <div className="relative flex items-center">
                   <input
                     className="clay-input w-full h-12 px-4 pr-12 border-none rounded-full text-gray-700 placeholder:text-gray-400 text-sm focus:ring-4 focus:ring-[#fbb751]/20 transition-all font-medium outline-none"
-                    placeholder="Enter your topic..."
+                    placeholder="What should I create content about?"
                     type="text"
                     value={form.topic}
                     onChange={(e) => updateField("topic", e.target.value)}
@@ -217,20 +225,42 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Language Selection */}
+            {/* Content Type Selection */}
             <div className="flex gap-2 mt-4 flex-wrap justify-center">
-              {(["en", "es", "fr"] as Language[]).map((lang) => (
+              {contentTypes.map((type) => (
                 <button
-                  key={lang}
-                  onClick={() => updateField("language", lang)}
-                  className={`flex h-10 items-center gap-2 rounded-full px-4 shadow-lg active:scale-95 transition-transform border-b-4 ${
-                    form.language === lang
+                  key={type.value}
+                  onClick={() => updateField("contentType", type.value)}
+                  className={`flex h-10 items-center gap-1.5 rounded-full px-3 shadow-lg active:scale-95 transition-transform border-b-4 ${
+                    form.contentType === type.value
                       ? "bg-white/90 border-black/5"
                       : "bg-white/40 border-white/30"
                   }`}
                 >
-                  <span className={`text-sm font-bold ${form.language === lang ? "text-gray-800" : "text-white"}`}>
-                    {lang === "en" ? "English" : lang === "es" ? "Spanish" : "French"}
+                  <span className={`material-symbols-outlined text-lg ${form.contentType === type.value ? "text-[#fbb751]" : "text-white"}`}>
+                    {type.icon}
+                  </span>
+                  <span className={`text-sm font-bold ${form.contentType === type.value ? "text-gray-800" : "text-white"}`}>
+                    {type.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Language Selection */}
+            <div className="flex gap-2 mt-2 flex-wrap justify-center">
+              {(["en", "es", "fr"] as Language[]).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => updateField("language", lang)}
+                  className={`flex h-8 items-center gap-2 rounded-full px-3 shadow-md active:scale-95 transition-transform border-b-2 ${
+                    form.language === lang
+                      ? "bg-white/90 border-black/5"
+                      : "bg-white/30 border-white/20"
+                  }`}
+                >
+                  <span className={`text-xs font-bold ${form.language === lang ? "text-gray-800" : "text-white"}`}>
+                    {lang === "en" ? "EN" : lang === "es" ? "ES" : "FR"}
                   </span>
                 </button>
               ))}

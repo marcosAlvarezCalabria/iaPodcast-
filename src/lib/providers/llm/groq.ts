@@ -6,7 +6,54 @@ import type {
   ProviderContext,
   ScriptRequest,
 } from "../types";
+import { ContentType } from "../types";
 import type { LLMProvider } from "./LLMProvider";
+
+const getContentTypePrompt = (contentType: ContentType) => {
+  const prompts = {
+    [ContentType.Reflection]: {
+      role: "a modern Philosopher",
+      type: "Philosophical Reflection",
+      instructions: `1. ONLY ONE continuous paragraph.
+2. No greetings or farewells. Jump straight into the deep idea.
+3. Poetic but understandable style.
+4. One powerful central idea.
+5. NO headers or sections. Just pure text.`,
+      example: "Sometimes we think time slips away, but it's us who run aimlessly. Stop for a second. Breathe. Life isn't the destination—it's the path beneath your feet right now.",
+    },
+    [ContentType.Summary]: {
+      role: "an expert Journalist",
+      type: "Informative Summary",
+      instructions: `1. Clear structure: what, why, how.
+2. Concrete and verifiable facts.
+3. Direct and accessible language.
+4. No personal opinions.
+5. Maximum 3-4 key points in flowing prose.`,
+      example: "Artificial intelligence is transforming education through three key changes: personalized learning paths, universal access to knowledge, and innovative assessment methods. The future of learning is already here.",
+    },
+    [ContentType.Story]: {
+      role: "a captivating Storyteller",
+      type: "Short Story",
+      instructions: `1. Start with a vivid scene or image.
+2. One central character or situation.
+3. Brief tension or conflict.
+4. Resolution or surprising twist.
+5. Sensory and evocative language.`,
+      example: "Maria found a letter under her door. No sender. It just said: 'The 3pm coffee changed my life.' She never went to cafes. But that day, she decided to go.",
+    },
+    [ContentType.Explanation]: {
+      role: "a passionate Teacher",
+      type: "Educational Explanation",
+      instructions: `1. Simple concept first, details after.
+2. Use real-world analogies.
+3. Avoid unnecessary technical jargon.
+4. Include a surprising fact or "did you know".
+5. Close with practical application.`,
+      example: "Your brain uses 20% of your energy, even though it's only 2% of your body weight. It's like a small engine that never stops. That's why good sleep matters—it's when your brain does its cleaning.",
+    },
+  };
+  return prompts[contentType];
+};
 
 const getApiKey = (): string => {
   const key = process.env.GROQ_API_KEY;
@@ -106,28 +153,26 @@ Genera el outline ahora:`;
         .map((s) => `## ${s.heading}\n${s.bullets.map((b) => `- ${b}`).join("\n")}`)
         .join("\n\n");
 
-      const prompt = `Eres un Filósofo moderno. Escribe una "Reflexión Diaria" de EXACTAMENTE 30 SEGUNDOS.
+      const contentPrompt = getContentTypePrompt(req.contentType);
 
-TÍTULO: ${req.outline.title}
-DURACIÓN: 30 segundos (Máximo 80-100 palabras)
-IDIOMA: ${req.language}
-TONO: ${req.tone}
-AUDIENCIA: ${req.targetAudience}
+      const prompt = `You are ${contentPrompt.role}. Write a "${contentPrompt.type}" of EXACTLY 30 SECONDS when read aloud.
+
+TITLE: ${req.outline.title}
+DURATION: 30 seconds (Maximum 80-100 words)
+OUTPUT LANGUAGE: ${req.language === "es" ? "Spanish" : req.language === "fr" ? "French" : "English"}
+TONE: ${req.tone}
+AUDIENCE: ${req.targetAudience}
 
 OUTLINE:
 ${outlineText}
 
-INSTRUCCIONES DE FORMATO:
-1. SOLO UN PÁRRAFO continuo.
-2. Sin "Hola" ni "Adiós". Entra directo a la idea profunda.
-3. Estilo poético pero comprensible.
-4. Una sola idea poderosa.
-5. NO uses encabezados ni secciones. Solo el texto puro.
+FORMAT INSTRUCTIONS:
+${contentPrompt.instructions}
 
-EJEMPLO:
-"A veces pensamos que el tiempo se nos escapa, pero somos nosotros quienes corremos sin sentido. Detente un segundo. Respira. La vida no es la meta, es el camino bajo tus pies ahora mismo."
+EXAMPLE:
+"${contentPrompt.example}"
 
-TU GUION (Escribe solo el texto de la reflexión):`;
+YOUR SCRIPT (Write only the ${contentPrompt.type.toLowerCase()} text, in the specified language):`;
 
       try {
         const completion = await groq.chat.completions.create({

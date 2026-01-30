@@ -1,15 +1,17 @@
-import { PodcastFormat, Tone } from "../providers/types";
+import { ContentType, PodcastFormat, Tone } from "../providers/types";
 
 export type JobInput = {
   topic: string;
   durationMinutes: number;
   language: string;
   tone: Tone;
+  contentType: ContentType;
   targetAudience: string;
   format: PodcastFormat;
 };
 
 const toneValues = new Set(Object.values(Tone));
+const contentTypeValues = new Set(Object.values(ContentType));
 const formatValues = new Set(Object.values(PodcastFormat));
 
 const isString = (value: unknown): value is string => typeof value === "string";
@@ -54,6 +56,11 @@ export const validateJobInput = (payload: unknown) => {
     ? (toneRaw as Tone)
     : Tone.Informative;
 
+  const contentTypeRaw = isString(data.contentType) ? data.contentType : ContentType.Reflection;
+  const contentType = contentTypeValues.has(contentTypeRaw as ContentType)
+    ? (contentTypeRaw as ContentType)
+    : ContentType.Reflection;
+
   const targetAudience = isString(data.targetAudience) && data.targetAudience.trim()
     ? data.targetAudience.trim()
     : "general";
@@ -72,6 +79,7 @@ export const validateJobInput = (payload: unknown) => {
     durationMinutes,
     language,
     tone,
+    contentType,
     targetAudience,
     format,
   };

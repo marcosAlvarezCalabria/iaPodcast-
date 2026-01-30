@@ -5,6 +5,13 @@ export enum Tone {
   Serious = "serious",
 }
 
+export enum ContentType {
+  Reflection = "reflection",
+  Summary = "summary",
+  Story = "story",
+  Explanation = "explanation",
+}
+
 export enum PodcastFormat {
   SoloHost = "solo-host",
   HostGuest = "host-guest",
@@ -22,6 +29,7 @@ export type OutlineRequest = {
   topic: string;
   language: string;
   tone: Tone;
+  contentType: ContentType;
   durationMinutes: number;
   targetAudience: string;
   format: PodcastFormat;
@@ -32,6 +40,7 @@ export type ScriptRequest = {
   topic: string;
   language: string;
   tone: Tone;
+  contentType: ContentType;
   durationMinutes: number;
   targetAudience: string;
   format: PodcastFormat;

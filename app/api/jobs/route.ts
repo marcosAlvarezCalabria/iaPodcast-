@@ -7,6 +7,8 @@ import { initJob } from "@/src/lib/jobs/storage";
 import type { JobMetadata } from "@/src/lib/jobs/types";
 import { runJob } from "@/src/lib/jobs/runner";
 
+export const runtime = "edge";
+
 export const POST = async (request: NextRequest) => {
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??

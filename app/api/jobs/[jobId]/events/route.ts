@@ -1,5 +1,6 @@
 import { readJobState } from "@/src/lib/jobs/storage";
 
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const encoder = new TextEncoder();

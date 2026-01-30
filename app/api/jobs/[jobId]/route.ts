@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { readJobState, readJobMetadata } from "@/src/lib/jobs/storage";
 
+export const runtime = "edge";
+
 export const GET = async (
   _request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> },

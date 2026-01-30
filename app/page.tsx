@@ -41,6 +41,14 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [jobTitle, setJobTitle] = useState<string | null>(null);
 
+  // Analytics Helper
+  // Define a type for the window object with gtag
+  const sendEvent = (action: string, params?: Record<string, unknown>) => {
+    if (typeof window !== "undefined" && (window as unknown as { gtag: (cmd: string, action: string, params?: Record<string, unknown>) => void }).gtag) {
+      (window as unknown as { gtag: (cmd: string, action: string, params?: Record<string, unknown>) => void }).gtag("event", action, params);
+    }
+  };
+
   // Audio state
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -59,6 +67,7 @@ export default function Home() {
     setProgress(0);
     setStepMessage("Creating job...");
     setError(null);
+    sendEvent("generate_podcast", { topic: form.topic, content_type: form.contentType });
 
     try {
       const response = await fetch("/api/jobs", {
@@ -125,6 +134,7 @@ export default function Home() {
       audioRef.current.pause();
     } else {
       audioRef.current.play();
+      sendEvent("play_audio", { title: jobTitle || form.topic });
     }
     setIsPlaying(!isPlaying);
   };
@@ -158,6 +168,7 @@ export default function Home() {
   const handleDownload = async (e: MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     if (!audioUrl) return;
+    sendEvent("download_audio", { title: jobTitle || form.topic });
     try {
       const res = await fetch(audioUrl);
       const blob = await res.blob();

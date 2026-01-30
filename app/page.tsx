@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
 
-// Definimos los tipos para nuestros valores visuales
 type Language = "es" | "en" | "fr";
+type AppState = "form" | "generating" | "done" | "error";
+
+type JobLog = {
+  step: string;
+  percent: number;
+  message: string;
+  ts: string;
+  done?: boolean;
+  status?: string;
+};
 
 const defaultForm = {
   topic: "",
@@ -16,10 +24,20 @@ const defaultForm = {
 };
 
 export default function Home() {
-  const router = useRouter();
   const [form, setForm] = useState(defaultForm);
-  const [submitting, setSubmitting] = useState(false);
+  const [appState, setAppState] = useState<AppState>("form");
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [stepMessage, setStepMessage] = useState("Preparing...");
   const [error, setError] = useState<string | null>(null);
+
+  // Audio state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const audioUrl = jobId && appState === "done" ? `/api/jobs/${jobId}/audio` : undefined;
 
   const updateField = (field: string, value: string | number) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -27,7 +45,9 @@ export default function Home() {
 
   const onSubmit = async () => {
     if (!form.topic.trim()) return;
-    setSubmitting(true);
+    setAppState("generating");
+    setProgress(0);
+    setStepMessage("Creating job...");
     setError(null);
 
     try {
@@ -40,191 +60,300 @@ export default function Home() {
         const payload = await response.json().catch(() => ({}));
         throw new Error(payload.error ?? "Failed to create job");
       }
-      const { jobId } = (await response.json()) as { jobId: string };
-      router.push(`/job/${jobId}`);
+      const { jobId: newJobId } = (await response.json()) as { jobId: string };
+      setJobId(newJobId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error");
-      setSubmitting(false);
+      setAppState("error");
     }
   };
 
+  // SSE for job progress
+  useEffect(() => {
+    if (!jobId || appState !== "generating") return;
+
+    const eventSource = new EventSource(`/api/jobs/${jobId}/events`);
+
+    eventSource.onmessage = (event) => {
+      const payload = JSON.parse(event.data) as JobLog;
+      setProgress(payload.percent);
+      setStepMessage(payload.message || payload.step);
+
+      if (payload.status === "DONE") {
+        setAppState("done");
+        eventSource.close();
+      } else if (payload.status === "ERROR") {
+        setError(payload.message || "Job failed");
+        setAppState("error");
+        eventSource.close();
+      }
+
+      if (payload.done) eventSource.close();
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+
+    return () => eventSource.close();
+  }, [jobId, appState]);
+
+  // Audio handlers
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+      setDuration(audioRef.current.duration || 0);
+    }
+  };
+
+  const formatTime = (time: number) => {
+    if (!time || isNaN(time)) return "00:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const reset = () => {
+    setAppState("form");
+    setJobId(null);
+    setProgress(0);
+    setStepMessage("Preparing...");
+    setError(null);
+    setForm(defaultForm);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+  };
+
   return (
-    <div className="bg-[#fbb751] dark:bg-[#231b0f] min-h-screen flex flex-col items-center overflow-x-hidden p-6 font-display">
-      {/* Top Navigation Area */}
-      <header className="w-full max-w-md flex justify-end items-center py-4 mb-4">
+    <div className="bg-[#fbb751] dark:bg-[#231b0f] h-screen flex flex-col items-center overflow-hidden p-4 font-display">
+      {audioUrl && (
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={() => setIsPlaying(false)}
+          onLoadedMetadata={handleTimeUpdate}
+        />
+      )}
+
+      {/* Header */}
+      <header className="w-full max-w-md flex justify-between items-center py-2">
+        {appState !== "form" ? (
+          <button
+            onClick={reset}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md text-white shadow-sm active:scale-95 transition-transform"
+          >
+            <span className="material-symbols-outlined text-xl">arrow_back</span>
+          </button>
+        ) : (
+          <div className="w-10" />
+        )}
+
+        <div className="flex flex-col items-center">
+          <span className="text-white/70 text-[10px] font-bold uppercase tracking-widest">
+            {appState === "form" ? "Audio Creator" : appState === "generating" ? "Generating..." : appState === "done" ? "Now Playing" : "Error"}
+          </span>
+        </div>
+
         <a
           href="https://github.com/marcosAlvarezCalabria?tab=repositories"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-md text-white shadow-sm border border-white/30 active:scale-95 transition-transform"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md text-white shadow-sm active:scale-95 transition-transform"
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="w-6 h-6"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-              clipRule="evenodd"
-            />
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+            <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
           </svg>
         </a>
       </header>
 
-      {/* Main 3D Stage Card */}
+      {/* Main Content */}
       <main className="w-full max-w-md flex-1 flex flex-col items-center justify-center">
-        <div className="clay-card w-full p-6 flex flex-col items-center gap-6 border-b-8 border-black/5 relative overflow-hidden">
-          {/* 3D Microphone Illustration Placeholder */}
-          <div className="relative w-full h-48 flex items-center justify-center">
-            {/* Decorative background elements for 3D feel */}
-            <div className="absolute w-40 h-40 bg-[#fbb751]/10 rounded-full blur-3xl"></div>
-            {/* Main Asset */}
-            <div className="relative w-40 h-40 flex items-center justify-center bg-gradient-to-br from-white to-gray-50 rounded-full shadow-lg border border-gray-100">
-              <div
-                className="w-36 h-36 rounded-full bg-cover bg-center"
-                data-alt="3D claymorphism microphone illustration with soft highlights"
-                style={{
-                  backgroundImage:
-                    'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAJDEv7dT11P2hF6luD6LnQQ17DUWrzDr0sPK3YMQT-ensAKnXhGFr6YwauqxRaltWhy2VUTlsWbjlwVVfd8e-bv963a_tIVmjx582rNN78O9gulVNPJoLHLdoJeHkdbekwIIvWxMBz52cOJz8zLO4zIh-SY2jhPzGaKInonKbzM2e2_2ak9NcDfmQEPDmAPrhGjoyhVPbJIGysFsGPLgO_8qJ9r26W_bdjL_nLtpn-bg8wOkoYnpu-PFdj0WenTjwzUzQYev9xm80")',
-                }}
-              ></div>
+
+        {/* === FORM STATE === */}
+        {appState === "form" && (
+          <>
+            <div className="clay-card w-full p-5 flex flex-col items-center gap-4 border-b-8 border-black/5">
+              {/* Microphone Icon */}
+              <div className="relative w-28 h-28 flex items-center justify-center bg-gradient-to-br from-white to-gray-50 rounded-full shadow-lg border border-gray-100">
+                <div
+                  className="w-24 h-24 rounded-full bg-cover bg-center"
+                  style={{
+                    backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAJDEv7dT11P2hF6luD6LnQQ17DUWrzDr0sPK3YMQT-ensAKnXhGFr6YwauqxRaltWhy2VUTlsWbjlwVVfd8e-bv963a_tIVmjx582rNN78O9gulVNPJoLHLdoJeHkdbekwIIvWxMBz52cOJz8zLO4zIh-SY2jhPzGaKInonKbzM2e2_2ak9NcDfmQEPDmAPrhGjoyhVPbJIGysFsGPLgO_8qJ9r26W_bdjL_nLtpn-bg8wOkoYnpu-PFdj0WenTjwzUzQYev9xm80")',
+                  }}
+                />
+              </div>
+
+              {/* Input */}
+              <div className="w-full">
+                <div className="relative flex items-center">
+                  <input
+                    className="clay-input w-full h-12 px-4 pr-12 border-none rounded-full text-gray-700 placeholder:text-gray-400 text-sm focus:ring-4 focus:ring-[#fbb751]/20 transition-all font-medium outline-none"
+                    placeholder="Enter your topic..."
+                    type="text"
+                    value={form.topic}
+                    onChange={(e) => updateField("topic", e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") onSubmit(); }}
+                  />
+                  <button
+                    onClick={onSubmit}
+                    disabled={!form.topic}
+                    className="absolute right-1.5 h-9 w-9 flex items-center justify-center bg-[#fbb751] rounded-full text-white shadow-md active:scale-90 transition-transform cursor-pointer disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-lg">auto_awesome</span>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Descriptive Text */}
-          <div className="text-center">
-            <h1 className="text-xl font-bold text-gray-800 tracking-tight">
-              Audio Creator
-            </h1>
-            <p className="text-gray-400 font-medium text-xs mt-1">
-              Start your 3D audio journey
-            </p>
-          </div>
+            {/* Language Selection */}
+            <div className="flex gap-2 mt-4 flex-wrap justify-center">
+              {(["en", "es", "fr"] as Language[]).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => updateField("language", lang)}
+                  className={`flex h-10 items-center gap-2 rounded-full px-4 shadow-lg active:scale-95 transition-transform border-b-4 ${
+                    form.language === lang
+                      ? "bg-white/90 border-black/5"
+                      : "bg-white/40 border-white/30"
+                  }`}
+                >
+                  <span className={`text-sm font-bold ${form.language === lang ? "text-gray-800" : "text-white"}`}>
+                    {lang === "en" ? "English" : lang === "es" ? "Spanish" : "French"}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
-          {/* Pop Style Input Field */}
-          <div className="w-full px-2 pb-2">
-            <div className="relative flex items-center">
-              <input
-                className="clay-input w-full h-14 px-5 pr-12 border-none rounded-full text-gray-700 placeholder:text-gray-400 text-base focus:ring-4 focus:ring-[#fbb751]/20 transition-all font-medium outline-none"
-                placeholder="Enter your script..."
-                type="text"
-                value={form.topic}
-                onChange={(e) => updateField("topic", e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") onSubmit();
-                }}
+        {/* === GENERATING STATE === */}
+        {appState === "generating" && (
+          <div className="flex flex-col items-center gap-6">
+            {/* Animated Circle */}
+            <div className="relative w-40 h-40 rounded-full bg-white p-2 clay-card flex items-center justify-center">
+              <div className="w-full h-full rounded-full bg-orange-50 flex items-center justify-center relative overflow-hidden">
+                <div className="radio-wave" style={{ animationDelay: "0s" }}></div>
+                <div className="radio-wave" style={{ animationDelay: "0.6s" }}></div>
+                <div className="radio-wave" style={{ animationDelay: "1.2s" }}></div>
+
+                <div className="z-30 relative bg-white/50 backdrop-blur-sm p-3 rounded-full">
+                  <span className="material-symbols-outlined text-3xl text-[#FFB74D] animate-pulse">
+                    auto_awesome
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div className="text-center">
+              <p className="text-white text-3xl font-bold">{progress}%</p>
+              <p className="text-white/80 text-sm mt-1">{stepMessage}</p>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full max-w-xs h-2 bg-white/30 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-white rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
               />
-              <button
-                onClick={onSubmit}
-                disabled={submitting || !form.topic}
-                className="absolute right-2 h-10 w-10 flex items-center justify-center bg-[#fbb751] rounded-full text-white shadow-md active:scale-90 transition-transform cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="material-symbols-outlined text-[20px]">
-                  {submitting ? "hourglass_empty" : "auto_awesome"}
-                </span>
-              </button>
             </div>
-            {error && <p className="mt-2 text-center text-red-400 font-bold text-xs">{error}</p>}
           </div>
-        </div>
+        )}
 
-        {/* Language Selection Section */}
-        <section className="w-full mt-6">
-          <h4 className="text-white/90 text-xs font-bold leading-normal tracking-widest px-4 py-1 text-center uppercase">
-            Select Language
-          </h4>
-          <div className="flex gap-3 p-2 flex-wrap justify-center mt-1">
-            {/* English Chip */}
-            <button
-              onClick={() => updateField("language", "en")}
-              className={`flex h-12 items-center justify-center gap-x-2 rounded-full pl-2 pr-5 shadow-lg active:scale-95 transition-transform border-b-4 ${form.language === "en"
-                ? "bg-white/90 backdrop-blur-sm border-black/5"
-                : "bg-white/40 backdrop-blur-sm border-white/30"
-                }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center ${form.language === "en"
-                  ? "bg-gray-100 border border-gray-200"
-                  : "bg-white/50"
-                  }`}
-              >
-                <span
-                  className={`material-symbols-outlined text-[20px] ${form.language === "en" ? "text-gray-700" : "text-white"
-                    }`}
-                >
-                  language
-                </span>
+        {/* === DONE STATE === */}
+        {appState === "done" && (
+          <div className="w-full flex flex-col items-center gap-4">
+            {/* Waveform Visualizer */}
+            <div className="w-full flex items-center justify-center gap-1.5 h-16">
+              {isPlaying ? (
+                [...Array(8)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-2.5 bg-white rounded-full wave-bar"
+                    style={{ height: `${20 + (i % 2) * 20}%`, animationDelay: `${i * 0.1}s` }}
+                  />
+                ))
+              ) : (
+                <div className="flex gap-1.5 items-center opacity-50">
+                  {[6, 10, 5, 8, 12, 6].map((h, i) => (
+                    <div key={i} className="w-2.5 bg-white rounded-full" style={{ height: `${h * 4}px` }} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Controls Card */}
+            <div className="w-full bg-white rounded-3xl p-5 clay-card flex flex-col gap-4">
+              {/* Time & Progress */}
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between px-1">
+                  <span className="text-[#FFB74D] font-bold text-xs">{formatTime(currentTime)}</span>
+                  <span className="text-gray-400 font-bold text-xs">{formatTime(duration)}</span>
+                </div>
+                <div className="h-2 w-full bg-orange-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#FFB74D] rounded-full transition-all"
+                    style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
+                  />
+                </div>
               </div>
-              <p
-                className={`text-base font-bold ${form.language === "en" ? "text-gray-800" : "text-white"
-                  }`}
-              >
-                English
-              </p>
-            </button>
-            {/* Spanish Chip */}
-            <button
-              onClick={() => updateField("language", "es")}
-              className={`flex h-14 items-center justify-center gap-x-3 rounded-full pl-3 pr-6 shadow-lg active:scale-95 transition-transform border-b-4 ${form.language === "es"
-                ? "bg-white/90 backdrop-blur-sm border-black/5"
-                : "bg-white/40 backdrop-blur-sm border-white/30"
-                }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center ${form.language === "es"
-                  ? "bg-gray-100 border border-gray-200"
-                  : "bg-white/50"
-                  }`}
-              >
-                <span
-                  className={`material-symbols-outlined text-[20px] ${form.language === "es" ? "text-gray-700" : "text-white"
-                    }`}
+
+              {/* Play Controls */}
+              <div className="flex items-center justify-center gap-6">
+                <button
+                  onClick={() => { if (audioRef.current) audioRef.current.currentTime -= 10; }}
+                  className="text-[#FFB74D] hover:scale-110 transition-transform"
                 >
-                  flag
-                </span>
-              </div>
-              <p
-                className={`text-base font-bold ${form.language === "es" ? "text-gray-800" : "text-white"
-                  }`}
-              >
-                Spanish
-              </p>
-            </button>
-            {/* French Chip */}
-            <button
-              onClick={() => updateField("language", "fr")}
-              className={`flex h-14 items-center justify-center gap-x-3 rounded-full pl-3 pr-6 shadow-lg active:scale-95 transition-transform border-b-4 ${form.language === "fr"
-                ? "bg-white/90 backdrop-blur-sm border-black/5"
-                : "bg-white/40 backdrop-blur-sm border-white/30"
-                }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center ${form.language === "fr"
-                  ? "bg-gray-100 border border-gray-200"
-                  : "bg-white/50"
-                  }`}
-              >
-                <span
-                  className={`material-symbols-outlined text-[20px] ${form.language === "fr" ? "text-gray-700" : "text-white"
-                    }`}
+                  <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>replay_10</span>
+                </button>
+
+                <button
+                  onClick={togglePlay}
+                  className="flex size-14 items-center justify-center rounded-full bg-[#FFB74D] text-white shadow-lg active:scale-95 transition-all"
                 >
-                  flag
-                </span>
+                  <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    {isPlaying ? "pause" : "play_arrow"}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => { if (audioRef.current) audioRef.current.currentTime += 10; }}
+                  className="text-[#FFB74D] hover:scale-110 transition-transform"
+                >
+                  <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>forward_10</span>
+                </button>
               </div>
-              <p
-                className={`text-base font-bold ${form.language === "fr" ? "text-gray-800" : "text-white"
-                  }`}
-              >
-                French
-              </p>
+            </div>
+          </div>
+        )}
+
+        {/* === ERROR STATE === */}
+        {appState === "error" && (
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-4xl text-red-500">error</span>
+            </div>
+            <p className="text-white font-bold">{error || "Something went wrong"}</p>
+            <button
+              onClick={reset}
+              className="px-6 py-2 bg-white rounded-full text-[#fbb751] font-bold shadow-lg active:scale-95 transition-transform"
+            >
+              Try Again
             </button>
           </div>
-        </section>
-
-        {/* Bottom Spacer for iOS Home Indicator */}
-        <div className="h-10"></div>
+        )}
       </main>
     </div>
   );

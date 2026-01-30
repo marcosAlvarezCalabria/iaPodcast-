@@ -50,18 +50,7 @@ export const POST = async (request: NextRequest) => {
 
     await initJob(jobId, metadata);
 
-    // Run the job synchronously and wait for it to complete
-    // This ensures the job finishes before Cloudflare terminates the worker
-    console.log(`[API] Starting job ${jobId}`);
-
-    try {
-      await runJob(jobId);
-      console.log(`[API] Job ${jobId} completed successfully`);
-    } catch (error) {
-      console.error(`[API] Job ${jobId} failed:`, error);
-      // Job failure is handled internally, continue to return jobId
-    }
-
+    // Return immediately - the job will be triggered by the SSE endpoint
     return NextResponse.json({ jobId });
   } catch (error) {
     console.error("POST /api/jobs error:", error);

@@ -50,12 +50,17 @@ export const POST = async (request: NextRequest) => {
 
     await initJob(jobId, metadata);
 
-    // Note: In Edge Runtime, we can't use setTimeout for background tasks.
-    // The job will run synchronously within the request timeout limit.
-    // For production, consider using Cloudflare Queues or an external job processor.
-    runJob(jobId).catch((error) => {
-      console.error(`job ${jobId} failed`, error);
-    });
+    // Run the job synchronously and wait for it to complete
+    // This ensures the job finishes before Cloudflare terminates the worker
+    console.log(`[API] Starting job ${jobId}`);
+
+    try {
+      await runJob(jobId);
+      console.log(`[API] Job ${jobId} completed successfully`);
+    } catch (error) {
+      console.error(`[API] Job ${jobId} failed:`, error);
+      // Job failure is handled internally, continue to return jobId
+    }
 
     return NextResponse.json({ jobId });
   } catch (error) {

@@ -230,6 +230,11 @@ export default function Home() {
               <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 pb-2">
                 {/* Headline */}
                 <div className="mb-3 text-center">
+                  <img
+                    src="/logo.png"
+                    alt="App Logo"
+                    className="w-16 h-16 mx-auto mb-3 rounded-2xl shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform duration-300"
+                  />
                   <h1 className="text-[#4a3a2a] text-xl font-bold leading-tight">Create Your Podcast</h1>
                   <p className="text-[#7a6a5a] text-xs font-medium mt-1">Transform your ideas into audio</p>
                 </div>

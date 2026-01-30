@@ -63,7 +63,8 @@ const concatenateAudioChunks = (chunks: Uint8Array[]): Uint8Array => {
 const fetchVoiceRSS = async (
   text: string,
   language: string,
-  apiKey: string
+  apiKey: string,
+  ctx?: ProviderContext
 ): Promise<Uint8Array> => {
   const params = new URLSearchParams({
     key: apiKey,
@@ -73,15 +74,36 @@ const fetchVoiceRSS = async (
     f: "24khz_16bit_mono",
   });
 
+  ctx?.logger?.debug("VoiceRSS request", { language, textLength: text.length });
+
   const response = await fetch(
     `https://api.voicerss.org/?${params.toString()}`
   );
+
   if (!response.ok) {
     throw new Error(`VoiceRSS API error: ${response.status}`);
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  return new Uint8Array(arrayBuffer);
+  const data = new Uint8Array(arrayBuffer);
+
+  // VoiceRSS returns error messages as text even with 200 status
+  // Check if response is actually audio (MP3 starts with 0xFF 0xFB or ID3)
+  if (data.length < 100) {
+    const textResponse = new TextDecoder().decode(data);
+    throw new Error(`VoiceRSS error: ${textResponse}`);
+  }
+
+  const isMP3 = (data[0] === 0xFF && (data[1] & 0xE0) === 0xE0) ||
+                (data[0] === 0x49 && data[1] === 0x44 && data[2] === 0x33); // ID3 tag
+
+  if (!isMP3) {
+    const textResponse = new TextDecoder().decode(data.slice(0, 200));
+    throw new Error(`VoiceRSS returned invalid audio: ${textResponse}`);
+  }
+
+  ctx?.logger?.debug("VoiceRSS success", { audioSize: data.length });
+  return data;
 };
 
 // Fetch TTS from a free public API
@@ -90,31 +112,47 @@ const fetchFreeTTS = async (
   language: string,
   ctx?: ProviderContext
 ): Promise<Uint8Array> => {
-  // Try multiple free TTS APIs
-
-  // Option 1: Use ResponsiveVoice (works in browser context)
-  // Option 2: Use basic TTS proxy services
-
-  // For now, use a simple approach: generate silent audio as placeholder
-  // In production, you'd want to use a real TTS service
-
   const voiceRssKey = process.env.VOICERSS_API_KEY;
+
+  console.log("[TTS] fetchFreeTTS called", {
+    hasVoiceRssKey: !!voiceRssKey,
+    keyLength: voiceRssKey?.length,
+    language
+  });
 
   if (voiceRssKey) {
     try {
-      return await fetchVoiceRSS(text, language, voiceRssKey);
+      const result = await fetchVoiceRSS(text, language, voiceRssKey, ctx);
+      console.log("[TTS] VoiceRSS success", { audioSize: result.length });
+      return result;
     } catch (error) {
-      ctx?.logger?.warn("VoiceRSS failed, trying alternative", {
-        error: String(error),
-      });
+      console.error("[TTS] VoiceRSS failed", { error: String(error) });
     }
   }
 
-  // Fallback: Generate a simple silent MP3 header + minimal data
-  // This is just for testing - in production use a real TTS service
-  ctx?.logger?.warn(
-    "No TTS API key configured. Set VOICERSS_API_KEY for real TTS."
-  );
+  // Try StreamElements TTS (free, no API key required)
+  try {
+    console.log("[TTS] Trying StreamElements...");
+    const voice = language === "es" ? "Conchita" : "Brian";
+    const params = new URLSearchParams({ voice, text });
+    const response = await fetch(
+      `https://api.streamelements.com/kappa/v2/speech?${params.toString()}`
+    );
+    if (response.ok) {
+      const arrayBuffer = await response.arrayBuffer();
+      const data = new Uint8Array(arrayBuffer);
+      if (data.length > 100) {
+        console.log("[TTS] StreamElements success", { audioSize: data.length });
+        return data;
+      }
+    }
+    console.error("[TTS] StreamElements failed", { status: response.status });
+  } catch (error) {
+    console.error("[TTS] StreamElements error", { error: String(error) });
+  }
+
+  // Fallback: Generate silent MP3 placeholder
+  console.warn("[TTS] All TTS APIs failed, using silent audio fallback");
 
   // Create minimal valid MP3 (silence)
   // MP3 frame header for 24kHz mono

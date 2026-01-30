@@ -1,3 +1,0 @@
-[build.environment]
-  # Prevent Netlify from flagging config values like "edge" or "groq" as leaked secrets
-  SECRETS_SCAN_OMIT_KEYS = "TTS_PROVIDER,LLM_PROVIDER,NEXT_PUBLIC_GA_ID"

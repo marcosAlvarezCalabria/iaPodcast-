@@ -1,10 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import type { JobMetadata, JobState, JobStatus, JobLog, JobOutputs } from "./types";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-key";
 
 // Initialize Supabase Client with Service Role for backend rights
+// Note: We use placeholders to prevent build-time crashes if env vars are missing during static generation.
+// The actual API calls will fail at runtime if keys are invalid, which is expected behavior.
 const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: false,

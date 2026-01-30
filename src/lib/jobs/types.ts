@@ -39,4 +39,5 @@ export type JobMetadata = {
   };
   timings?: Record<string, string>;
   usage?: Record<string, unknown>[];
+  title?: string;
 };

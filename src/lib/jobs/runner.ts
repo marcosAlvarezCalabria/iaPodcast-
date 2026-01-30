@@ -157,7 +157,11 @@ export const runJob = async (jobId: string): Promise<void> => {
       tts: tts.name(),
     };
     metadata.timings = { startedAt, finishedAt };
+    metadata.timings = { startedAt, finishedAt };
     metadata.usage = usageRecords;
+    if (outline && outline.title) {
+      metadata.title = outline.title;
+    }
 
     // Save updated metadata
     // We use the internal writeJSON which now uploads to Supabase

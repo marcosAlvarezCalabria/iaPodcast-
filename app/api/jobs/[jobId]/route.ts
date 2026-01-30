@@ -18,6 +18,7 @@ export const GET = async (
       percent: state.percent,
       error: state.error,
       topic: metadata.input.topic,
+      title: metadata.title,
       outputs: state.outputs, // Return direct Supabase public URLs set by the runner
     });
   } catch {

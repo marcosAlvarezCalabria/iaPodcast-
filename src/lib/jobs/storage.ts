@@ -50,7 +50,80 @@ const readJSON = async <T>(path: string): Promise<T> => {
   return JSON.parse(text) as T;
 };
 
-// ... (keep logic same, replace 'supabase' with 'getSupabase()') ...
+// Initialize a new job
+export const initJob = async (jobId: string, metadata: JobMetadata): Promise<JobState> => {
+  const now = new Date().toISOString();
+  const state: JobState = {
+    jobId,
+    status: "QUEUED",
+    step: "queued",
+    percent: 0,
+    message: "Job queued",
+    logs: [
+      {
+        step: "queued",
+        percent: 0,
+        message: "Job queued",
+        ts: now,
+      },
+    ],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await writeJSON(`${jobId}/metadata.json`, metadata);
+  await writeJSON(`${jobId}/state.json`, state);
+  return state;
+};
+
+// Read job state
+export const readJobState = async (jobId: string): Promise<JobState> => {
+  return readJSON<JobState>(`${jobId}/state.json`);
+};
+
+// Read job metadata
+export const readJobMetadata = async (jobId: string): Promise<JobMetadata> => {
+  return readJSON<JobMetadata>(`${jobId}/metadata.json`);
+};
+
+// Update job state
+export const updateJobState = async (
+  jobId: string,
+  patch: Partial<JobState>,
+  log?: JobLog,
+): Promise<JobState> => {
+  const current = await readJobState(jobId);
+  const logs = log ? [...current.logs, log] : current.logs;
+  const updatedAt = log?.ts ?? new Date().toISOString();
+  const next: JobState = {
+    ...current,
+    ...patch,
+    logs,
+    updatedAt,
+  };
+  await writeJSON(`${jobId}/state.json`, next);
+  return next;
+};
+
+export const setJobStatus = async (
+  jobId: string,
+  status: JobStatus,
+  step: string,
+  percent: number,
+  message: string,
+  error?: string,
+): Promise<JobState> => {
+  const ts = new Date().toISOString();
+  const log: JobLog = { step, percent, message, ts };
+  return updateJobState(jobId, { status, step, percent, message, error }, log);
+};
+
+export const setJobOutputs = async (
+  jobId: string,
+  outputs: JobOutputs,
+): Promise<JobState> => {
+  return updateJobState(jobId, { outputs });
+};
 
 // New Helper: Upload generic files (mp3, md)
 export const saveJobFile = async (

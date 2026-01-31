@@ -143,6 +143,9 @@ export default function Home() {
     return langMap[lang];
   }, []);
 
+  // Use a ref to capture text even if 'isFinal' never fires (common iOS bug)
+  const transcriptRef = useRef("");
+
   // Start/stop speech recognition
   const toggleListening = useCallback(() => {
     if (!speechSupported) return;
@@ -156,36 +159,40 @@ export default function Home() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
-    // iOS Safari works much better with continuous = false for auto-stopping.
-    // We ENABLE interimResults so the user sees text while speaking (feedback).
+    // Key configuration for iOS Safari stability:
+    // continuous: false -> Stops automatically after one sentence (better reliability)
+    // interimResults: true -> Get feedback, but use 'onend' to save if 'isFinal' fails
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = getSpeechLang(form.language);
+
+    transcriptRef.current = "";
 
     recognition.onstart = () => {
       setIsListening(true);
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = "";
-
-      // Capture all results (interim and final)
+      // Capture the latest transcript
+      let currentInterim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
+        const result = event.results[i];
+        if (result.isFinal) {
+          // If we actually get a final result, save it immediately
+          const text = result[0].transcript;
+          setForm((prev) => ({
+            ...prev,
+            topic: prev.topic + (prev.topic ? " " : "") + text,
+          }));
+          transcriptRef.current = ""; // Clear ref since we saved it
         } else {
-          // If interim, we could show it, but for now we rely on final
-          // Actually, let's just append final ones to avoid phantom text
+          currentInterim += result[0].transcript;
         }
       }
 
-      // If we have a final chunk, append it
-      if (finalTranscript) {
-        setForm((prev) => ({
-          ...prev,
-          topic: prev.topic + (prev.topic ? " " : "") + finalTranscript,
-        }));
+      // Store interim in ref in case we need it at onend
+      if (currentInterim) {
+        transcriptRef.current = currentInterim;
       }
     };
 
@@ -199,8 +206,16 @@ export default function Home() {
     };
 
     recognition.onend = () => {
-      // Auto-stop UI when silence is detected (native behavior of continuous=false)
       setIsListening(false);
+
+      // iOS Fallback: If we have text in the ref that wasn't saved (because isFinal didn't fire), save it now
+      if (transcriptRef.current.trim()) {
+        setForm((prev) => ({
+          ...prev,
+          topic: prev.topic + (prev.topic ? " " : "") + transcriptRef.current,
+        }));
+        transcriptRef.current = "";
+      }
     };
 
     recognitionRef.current = recognition;

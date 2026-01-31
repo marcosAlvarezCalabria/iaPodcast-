@@ -86,6 +86,7 @@ export const runJob = async (jobId: string): Promise<void> => {
         {
           text: section.content,
           language: metadata.input.language,
+          voice: metadata.input.voice,
           format: "mp3",
         },
         ctx,

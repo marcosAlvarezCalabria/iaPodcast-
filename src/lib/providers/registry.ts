@@ -11,6 +11,7 @@ import type { TTSProvider } from "./tts/TTSProvider";
 import { createCloudflareTTSProvider } from "./tts/cloudflare";
 import { createEdgeTTSProvider } from "./tts/edge";
 import { createMockTTSProvider } from "./tts/mock";
+import { createGoogleTTSProvider } from "./tts/google";
 
 export type Provider = LLMProvider | TTSProvider;
 
@@ -26,6 +27,7 @@ export const providersRegistry = {
     edge: createEdgeTTSProvider,
     mock: createMockTTSProvider,
     cloudflare: createCloudflareTTSProvider,
+    google: createGoogleTTSProvider,
   },
 } as const;
 

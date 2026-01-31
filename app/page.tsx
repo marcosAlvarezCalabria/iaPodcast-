@@ -30,7 +30,23 @@ const defaultForm = {
   tone: "informative",
   targetAudience: "general",
   format: "solo-host",
+  voice: "",
 };
+
+const VOICES = [
+  // Spanish (Spain)
+  { id: "es-ES-Neural2-B", label: "Mateo", lang: "es", gender: "Male", desc: "Narrativo" },
+  { id: "es-ES-Neural2-A", label: "Lucia", lang: "es", gender: "Female", desc: "Suave" },
+  // Spanish (LatAm)
+  { id: "es-US-Neural2-B", label: "Diego", lang: "es", gender: "Male", desc: "Profundo" },
+  { id: "es-US-Neural2-A", label: "Mia", lang: "es", gender: "Female", desc: "Vibrante" },
+  // English
+  { id: "en-US-Neural2-D", label: "James", lang: "en", gender: "Male", desc: "Radio Host" },
+  { id: "en-US-Neural2-C", label: "Emma", lang: "en", gender: "Female", desc: "Professional" },
+  // French
+  { id: "fr-FR-Neural2-B", label: "Claude", lang: "fr", gender: "Male", desc: "Élégant" },
+  { id: "fr-FR-Neural2-A", label: "Marie", lang: "fr", gender: "Female", desc: "Douce" },
+];
 
 export default function Home() {
   const [form, setForm] = useState(defaultForm);
@@ -240,23 +256,25 @@ export default function Home() {
               {/* Scrollable Form Area */}
               <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 pb-2">
                 {/* Headline */}
-                <div className="mb-3 text-center">
+                <div className="mb-6 text-center flex items-center justify-center gap-4">
                   <img
                     src="/logo.png"
                     alt="App Logo"
-                    className="w-16 h-16 mx-auto mb-3 rounded-2xl shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform duration-300"
+                    className="w-16 h-16 rounded-xl shadow-md shadow-amber-500/20"
                   />
-                  <h1 className="text-[#4a3a2a] text-xl font-bold leading-tight">Create Your Podcast</h1>
-                  <p className="text-[#7a6a5a] text-xs font-medium mt-1">Transform your ideas into audio</p>
+                  <div className="text-left">
+                    <h1 className="text-[#4a3a2a] text-2xl font-bold leading-none">Create Your Podcast</h1>
+                    <p className="text-[#7a6a5a] text-sm font-medium leading-none mt-2">Transform your ideas into audio</p>
+                  </div>
                 </div>
 
                 {/* Topic Input Section */}
-                <div className="mb-4">
-                  <label className="block text-[#4a3a2a] text-[10px] font-bold uppercase tracking-wider mb-1.5 ml-1">The Topic</label>
+                <div className="mb-6">
+                  <label className="block text-[#4a3a2a] text-xs font-bold uppercase tracking-wider mb-2 ml-1">The Topic</label>
                   <div className="glass-input rounded-xl p-3">
                     <textarea
-                      className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-16 p-0 text-sm font-normal leading-relaxed outline-none"
-                      placeholder="What should the AI talk about? Enter your context or topic here..."
+                      className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-14 p-0 text-lg font-normal leading-snug outline-none"
+                      placeholder="What should the AI talk about?"
                       value={form.topic}
                       onChange={(e) => updateField("topic", e.target.value)}
                     ></textarea>
@@ -264,34 +282,34 @@ export default function Home() {
                 </div>
 
                 {/* Content Type Grid */}
-                <div className="mb-4">
-                  <label className="block text-[#4a3a2a] text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">Content Style</label>
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="mb-6">
+                  <label className="block text-[#4a3a2a] text-xs font-bold uppercase tracking-wider mb-2 ml-1">Content Style</label>
+                  <div className="grid grid-cols-2 gap-4">
                     {contentTypes.map((type) => (
                       <button
                         key={type.value}
                         onClick={() => updateField("contentType", type.value)}
                         className={`
-                                        rounded-xl p-2 flex flex-col items-center justify-center gap-1.5 text-center transition-all cursor-pointer border-2 h-20
+                                        rounded-lg p-2.5 flex flex-row items-center justify-center gap-2.5 text-center transition-all cursor-pointer border-2 h-12
                                         ${form.contentType === type.value
                             ? "bg-primary/10 border-primary"
                             : "bg-white border-transparent shadow-sm hover:border-primary/30"
                           }
                                     `}
                       >
-                        <span className={`material-symbols-outlined text-2xl text-primary`}>
+                        <span className={`material-symbols-outlined text-xl text-primary`}>
                           {type.icon}
                         </span>
-                        <span className="text-[#4a3a2a] text-xs font-semibold">{type.label}</span>
+                        <span className="text-[#4a3a2a] text-xs font-bold uppercase">{type.label}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* Language Selection */}
-                <div className="mb-1">
+                <div className="mb-6">
                   <label className="block text-[#4a3a2a] text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">Voice Language</label>
-                  <div className="flex bg-[#f3f0ec] p-1 rounded-full">
+                  <div className="flex bg-[#f3f0ec] p-1.5 rounded-full gap-2">
                     {(["en", "es", "fr"] as Language[]).map((lang) => (
                       <button
                         key={lang}
@@ -305,6 +323,49 @@ export default function Home() {
                                     `}
                       >
                         {lang.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Voice Selection */}
+                <div className="mb-6">
+                  <label className="block text-[#4a3a2a] text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
+                    Select Voice <span className="text-amber-600 text-[10px] ml-1">PREMIUM</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    {VOICES.filter(v => v.lang === form.language).length === 0 && (
+                      <p className="col-span-2 text-xs text-red-500 text-center">No voices found for {form.language}</p>
+                    )}
+                    {VOICES.filter(v => v.lang === form.language).map((voice) => (
+                      <button
+                        key={voice.id}
+                        onClick={() => updateField("voice", voice.id)}
+                        className={`
+                          relative overflow-hidden rounded-lg p-2 flex flex-row items-center gap-3 transition-all text-left border-2
+                          ${form.voice === voice.id
+                            ? "bg-white border-primary shadow-sm"
+                            : "bg-white/50 border-transparent hover:bg-white hover:border-primary/20"
+                          }
+                        `}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-bold ${form.voice === voice.id ? "text-primary" : "text-[#4a3a2a]"}`}>
+                              {voice.label}
+                            </span>
+                            <span className="text-[9px] uppercase font-bold text-[#a59585] tracking-wider">{voice.desc}</span>
+                          </div>
+                        </div>
+                        <span className="material-symbols-outlined text-base opacity-40 shrink-0">
+                          {voice.gender === "Male" ? "face" : "face_3"}
+                        </span>
+
+                        {form.voice === voice.id && (
+                          <div className="absolute top-0 right-0 p-0.5">
+                            <div className="size-1.5 rounded-full bg-primary/20 animate-ping" />
+                          </div>
+                        )}
                       </button>
                     ))}
                   </div>

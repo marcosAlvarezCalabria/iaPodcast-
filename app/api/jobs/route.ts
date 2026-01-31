@@ -3,9 +3,8 @@ import type { NextRequest } from "next/server";
 import { createJobId } from "@/src/lib/utils/ids";
 import { validateJobInput } from "@/src/lib/utils/validation";
 import { checkRateLimit } from "@/src/lib/utils/rateLimit";
-import { initJob } from "@/src/lib/jobs/storage";
+import { cleanupJobs, initJob } from "@/src/lib/jobs/storage";
 import type { JobMetadata } from "@/src/lib/jobs/types";
-import { runJob } from "@/src/lib/jobs/runner";
 
 export const runtime = "edge";
 
@@ -49,6 +48,16 @@ export const POST = async (request: NextRequest) => {
     };
 
     await initJob(jobId, metadata);
+
+    // Auto-cleanup old jobs in background (fire and forget)
+    // Deletes jobs older than 24h and incomplete jobs older than 30min
+    // Excludes the current job to prevent any race conditions
+    cleanupJobs({
+      maxAgeHours: 24,
+      deleteIncomplete: true,
+      incompleteThresholdMinutes: 30,
+      excludeJobIds: [jobId],
+    }).catch((err) => console.error("Auto-cleanup failed:", err));
 
     // Return immediately - the job will be triggered by the SSE endpoint
     return NextResponse.json({ jobId });

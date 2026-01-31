@@ -1,8 +1,52 @@
 "use client";
 
-import { useState, useRef, useEffect, MouseEvent } from "react";
+import { useState, useRef, useEffect, useCallback, MouseEvent } from "react";
 
 type Language = "es" | "en" | "fr";
+
+// Web Speech API types
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: Event & { error: string }) => void) | null;
+  onend: (() => void) | null;
+  onstart: (() => void) | null;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
 type ContentType = "reflection" | "summary" | "story" | "explanation";
 type AppState = "form" | "generating" | "done" | "error";
 
@@ -34,18 +78,21 @@ const defaultForm = {
 };
 
 const VOICES = [
-  // Spanish (Spain)
-  { id: "es-ES-Neural2-B", label: "Mateo", lang: "es", gender: "Male", desc: "Narrativo" },
-  { id: "es-ES-Neural2-A", label: "Lucia", lang: "es", gender: "Female", desc: "Suave" },
-  // Spanish (LatAm)
-  { id: "es-US-Neural2-B", label: "Diego", lang: "es", gender: "Male", desc: "Profundo" },
-  { id: "es-US-Neural2-A", label: "Mia", lang: "es", gender: "Female", desc: "Vibrante" },
+  // Spanish
+  { id: "es-ES-Neural2-B", label: "Mateo", lang: "es", gender: "Male", desc: "Narrator" },
+  { id: "es-ES-Wavenet-C", label: "Elena", lang: "es", gender: "Female", desc: "Warm" },
+  { id: "es-US-Neural2-B", label: "Diego", lang: "es", gender: "Male", desc: "Deep" },
+  { id: "es-US-Neural2-A", label: "Mia", lang: "es", gender: "Female", desc: "Vibrant" },
   // English
   { id: "en-US-Neural2-D", label: "James", lang: "en", gender: "Male", desc: "Radio Host" },
   { id: "en-US-Neural2-C", label: "Emma", lang: "en", gender: "Female", desc: "Professional" },
+  { id: "en-US-Neural2-A", label: "Michael", lang: "en", gender: "Male", desc: "Calm" },
+  { id: "en-US-Neural2-F", label: "Sarah", lang: "en", gender: "Female", desc: "Friendly" },
   // French
-  { id: "fr-FR-Neural2-B", label: "Claude", lang: "fr", gender: "Male", desc: "Élégant" },
-  { id: "fr-FR-Neural2-A", label: "Marie", lang: "fr", gender: "Female", desc: "Douce" },
+  { id: "fr-FR-Neural2-B", label: "Claude", lang: "fr", gender: "Male", desc: "Elegant" },
+  { id: "fr-FR-Neural2-A", label: "Marie", lang: "fr", gender: "Female", desc: "Soft" },
+  { id: "fr-FR-Neural2-D", label: "Pierre", lang: "fr", gender: "Male", desc: "Deep" },
+  { id: "fr-FR-Wavenet-C", label: "Sophie", lang: "fr", gender: "Female", desc: "Warm" },
 ];
 
 export default function Home() {
@@ -71,6 +118,86 @@ export default function Home() {
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Speech recognition state
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // EventSource ref for SSE connection
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  // Check if speech recognition is supported
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    setSpeechSupported(!!SpeechRecognition);
+  }, []);
+
+  // Language mapping for speech recognition
+  const getSpeechLang = useCallback((lang: Language): string => {
+    const langMap: Record<Language, string> = {
+      es: "es-ES",
+      en: "en-US",
+      fr: "fr-FR",
+    };
+    return langMap[lang];
+  }, []);
+
+  // Start/stop speech recognition
+  const toggleListening = useCallback(() => {
+    if (!speechSupported) return;
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = getSpeechLang(form.language);
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let finalTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        setForm((prev) => ({
+          ...prev,
+          topic: prev.topic + (prev.topic ? " " : "") + finalTranscript,
+        }));
+      }
+    };
+
+    recognition.onerror = (event) => {
+      // Ignore non-critical errors
+      if (event.error === "no-speech" || event.error === "aborted") {
+        return;
+      }
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, [speechSupported, isListening, form.language, getSpeechLang]);
+
   const audioUrl = jobId && appState === "done" ? `/api/jobs/${jobId}/audio` : undefined;
 
   const updateField = (field: string, value: string | number) => {
@@ -79,10 +206,20 @@ export default function Home() {
 
   const onSubmit = async () => {
     if (!form.topic.trim()) return;
+
+    // Cancel any existing job/connection before starting a new one
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+
+    // Reset state for new job
     setAppState("generating");
     setProgress(0);
     setStepMessage("Creating job...");
     setError(null);
+    setJobId(null);
+    setJobTitle(null);
     sendEvent("generate_podcast", { topic: form.topic, content_type: form.contentType });
 
     try {
@@ -93,12 +230,15 @@ export default function Home() {
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error ?? "Failed to create job");
+        const errorMsg = payload.error ?? payload.details ?? "Failed to create job";
+        throw new Error(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
       }
       const { jobId: newJobId } = (await response.json()) as { jobId: string };
       setJobId(newJobId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unexpected error");
+      const errorMessage = err instanceof Error ? err.message : "Unexpected error";
+      console.error("Job creation failed:", errorMessage);
+      setError(errorMessage);
       setAppState("error");
     }
   };
@@ -107,40 +247,65 @@ export default function Home() {
   useEffect(() => {
     if (!jobId || appState !== "generating") return;
 
+    // Close any existing connection before creating a new one
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
     const eventSource = new EventSource(`/api/jobs/${jobId}/events`);
+    eventSourceRef.current = eventSource;
 
     eventSource.onmessage = (event) => {
-      const payload = JSON.parse(event.data) as JobLog;
-      setProgress(payload.percent);
-      setStepMessage(payload.message || payload.step);
+      try {
+        const payload = JSON.parse(event.data) as JobLog;
+        setProgress(payload.percent);
+        setStepMessage(payload.message || payload.step);
 
-      if (payload.status === "DONE") {
-        setAppState("done");
-        // Fetch the full job to get the title
-        fetch(`/api/jobs/${jobId}`)
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.title) {
-              setJobTitle(data.title);
-            }
-          })
-          .catch((err) => console.error("Failed to fetch job details", err));
+        if (payload.status === "DONE") {
+          setAppState("done");
+          // Fetch the full job to get the title
+          fetch(`/api/jobs/${jobId}`)
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.title) {
+                setJobTitle(data.title);
+              }
+            })
+            .catch((err) => console.error("Failed to fetch job details", err));
 
-        eventSource.close();
-      } else if (payload.status === "ERROR") {
-        setError(payload.message || "Job failed");
-        setAppState("error");
-        eventSource.close();
+          eventSource.close();
+          eventSourceRef.current = null;
+        } else if (payload.status === "ERROR") {
+          setError(payload.message || "Job failed");
+          setAppState("error");
+          eventSource.close();
+          eventSourceRef.current = null;
+        }
+
+        if (payload.done) {
+          eventSource.close();
+          eventSourceRef.current = null;
+        }
+      } catch (parseError) {
+        console.error("Failed to parse SSE message:", parseError);
       }
-
-      if (payload.done) eventSource.close();
     };
 
-    eventSource.onerror = () => {
+    eventSource.onerror = (err) => {
+      console.error("SSE connection error:", err);
+      // Only set error if we're still in generating state
+      if (appState === "generating") {
+        setError("Connection lost. Please try again.");
+        setAppState("error");
+      }
       eventSource.close();
+      eventSourceRef.current = null;
     };
 
-    return () => eventSource.close();
+    return () => {
+      eventSource.close();
+      eventSourceRef.current = null;
+    };
   }, [jobId, appState]);
 
   // Audio handlers
@@ -271,13 +436,31 @@ export default function Home() {
                 {/* Topic Input Section */}
                 <div className="mb-5 md:mb-3">
                   <label className="block text-[#4a3a2a] text-xs md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1 ml-1">The Topic</label>
-                  <div className="glass-input rounded-xl md:rounded-lg p-4 md:p-3">
+                  <div className="glass-input rounded-xl md:rounded-lg p-4 md:p-3 relative">
                     <textarea
-                      className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-20 md:h-14 p-0 text-base md:text-sm font-normal leading-snug outline-none"
-                      placeholder="What should the AI talk about?"
+                      className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-20 md:h-14 p-0 pr-12 text-base md:text-sm font-normal leading-snug outline-none"
+                      placeholder={isListening ? "Listening..." : "What should the AI talk about?"}
                       value={form.topic}
                       onChange={(e) => updateField("topic", e.target.value)}
                     ></textarea>
+                    {speechSupported && (
+                      <button
+                        type="button"
+                        onClick={toggleListening}
+                        className={`
+                          absolute right-3 top-1/2 -translate-y-1/2 size-10 md:size-8 rounded-full flex items-center justify-center transition-all
+                          ${isListening
+                            ? "bg-red-500 text-white animate-pulse"
+                            : "bg-primary/10 text-primary hover:bg-primary/20"
+                          }
+                        `}
+                        title={isListening ? "Stop listening" : "Start voice input"}
+                      >
+                        <span className="material-symbols-outlined text-xl md:text-lg">
+                          {isListening ? "stop" : "mic"}
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
 

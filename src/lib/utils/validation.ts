@@ -1,88 +1,45 @@
+import { z } from "zod";
 import { ContentType, PodcastFormat, Tone } from "../providers/types";
 
-export type JobInput = {
-  topic: string;
-  durationMinutes: number;
-  language: string;
-  tone: Tone;
-  contentType: ContentType;
-  targetAudience: string;
-  format: PodcastFormat;
-};
+// Schema Definition
+export const JobInputSchema = z.object({
+  topic: z.string().trim().min(1, "Topic is required"),
+  durationMinutes: z.coerce
+    .number()
+    .min(0.5, "Duration must be at least 0.5 minutes")
+    .max(10, "Duration must be at most 10 minutes")
+    .default(1),
+  language: z.enum(["en", "es", "fr"]).default("en"),
+  tone: z.nativeEnum(Tone).default(Tone.Informative),
+  contentType: z.nativeEnum(ContentType).default(ContentType.Reflection),
+  targetAudience: z.string().trim().default("general"),
+  format: z.nativeEnum(PodcastFormat).default(PodcastFormat.SoloHost),
+});
 
-const toneValues = new Set(Object.values(Tone));
-const contentTypeValues = new Set(Object.values(ContentType));
-const formatValues = new Set(Object.values(PodcastFormat));
-
-const isString = (value: unknown): value is string => typeof value === "string";
-
-const parseNumber = (value: unknown, fallback: number): number => {
-  if (typeof value === "number" && !Number.isNaN(value)) {
-    return value;
-  }
-  if (typeof value === "string" && value.trim() !== "") {
-    const parsed = Number(value);
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
-  }
-  return fallback;
-};
+// Type inference
+export type JobInput = z.infer<typeof JobInputSchema>;
 
 export const validateJobInput = (payload: unknown) => {
-  const errors: Record<string, string[]> = {};
-  if (!payload || typeof payload !== "object") {
-    return { success: false, errors: { root: ["Invalid payload"] } } as const;
+  const result = JobInputSchema.safeParse(payload);
+
+  if (!result.success) {
+    const formattedErrors: Record<string, string[]> = {};
+
+    result.error.issues.forEach((issue) => {
+      const path = issue.path[0] as string;
+      if (!formattedErrors[path]) {
+        formattedErrors[path] = [];
+      }
+      formattedErrors[path].push(issue.message);
+    });
+
+    // Provide a root error if we failed on a non-object or unparseable inputs at top level
+    if (Object.keys(formattedErrors).length === 0) {
+      formattedErrors["root"] = ["Invalid input format"];
+    }
+
+    return { success: false, errors: formattedErrors } as const;
   }
 
-  const data = payload as Record<string, unknown>;
-
-  const topic = isString(data.topic) ? data.topic.trim() : "";
-  if (!topic) {
-    errors.topic = ["Topic is required"];
-  }
-
-  const durationMinutes = parseNumber(data.durationMinutes, 0.5);
-  if (durationMinutes < 0.5 || durationMinutes > 10) {
-    errors.durationMinutes = ["Duration must be between 0.5 and 10 minutes"];
-  }
-
-  const language = isString(data.language) && data.language.trim()
-    ? data.language.trim()
-    : "en";
-
-  const toneRaw = isString(data.tone) ? data.tone : Tone.Informative;
-  const tone = toneValues.has(toneRaw as Tone)
-    ? (toneRaw as Tone)
-    : Tone.Informative;
-
-  const contentTypeRaw = isString(data.contentType) ? data.contentType : ContentType.Reflection;
-  const contentType = contentTypeValues.has(contentTypeRaw as ContentType)
-    ? (contentTypeRaw as ContentType)
-    : ContentType.Reflection;
-
-  const targetAudience = isString(data.targetAudience) && data.targetAudience.trim()
-    ? data.targetAudience.trim()
-    : "general";
-
-  const formatRaw = isString(data.format) ? data.format : PodcastFormat.SoloHost;
-  const format = formatValues.has(formatRaw as PodcastFormat)
-    ? (formatRaw as PodcastFormat)
-    : PodcastFormat.SoloHost;
-
-  if (Object.keys(errors).length > 0) {
-    return { success: false, errors } as const;
-  }
-
-  const validated: JobInput = {
-    topic,
-    durationMinutes,
-    language,
-    tone,
-    contentType,
-    targetAudience,
-    format,
-  };
-
-  return { success: true, data: validated } as const;
+  return { success: true, data: result.data } as const;
 };

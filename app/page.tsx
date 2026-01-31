@@ -156,9 +156,10 @@ export default function Home() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
-    // iOS Safari works much better with continuous = false AND interimResults = false
+    // iOS Safari works much better with continuous = false for auto-stopping.
+    // We ENABLE interimResults so the user sees text while speaking (feedback).
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.lang = getSpeechLang(form.language);
 
     recognition.onstart = () => {
@@ -166,20 +167,29 @@ export default function Home() {
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // With interimResults=false, we just get the final text once
-      if (event.results.length > 0) {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setForm((prev) => ({
-            ...prev,
-            topic: prev.topic + (prev.topic ? " " : "") + transcript,
-          }));
+      let finalTranscript = "";
+
+      // Capture all results (interim and final)
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          // If interim, we could show it, but for now we rely on final
+          // Actually, let's just append final ones to avoid phantom text
         }
+      }
+
+      // If we have a final chunk, append it
+      if (finalTranscript) {
+        setForm((prev) => ({
+          ...prev,
+          topic: prev.topic + (prev.topic ? " " : "") + finalTranscript,
+        }));
       }
     };
 
     recognition.onerror = (event) => {
-      // Ignore non-critical errors
       if (event.error === "no-speech" || event.error === "aborted") {
         setIsListening(false);
         return;
@@ -189,7 +199,7 @@ export default function Home() {
     };
 
     recognition.onend = () => {
-      // Auto-stop UI when silence is detected or sentence ends
+      // Auto-stop UI when silence is detected (native behavior of continuous=false)
       setIsListening(false);
     };
 

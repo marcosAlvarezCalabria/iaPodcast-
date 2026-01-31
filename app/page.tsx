@@ -156,9 +156,9 @@ export default function Home() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
-    // iOS Safari works much better with continuous = false
+    // iOS Safari works much better with continuous = false AND interimResults = false
     recognition.continuous = false;
-    recognition.interimResults = true;
+    recognition.interimResults = false;
     recognition.lang = getSpeechLang(form.language);
 
     recognition.onstart = () => {
@@ -166,22 +166,15 @@ export default function Home() {
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = "";
-
-      // On iOS with continuous=false, usually the last result is the one we want
-      // But we still iterate to be safe across browsers
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
+      // With interimResults=false, we just get the final text once
+      if (event.results.length > 0) {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setForm((prev) => ({
+            ...prev,
+            topic: prev.topic + (prev.topic ? " " : "") + transcript,
+          }));
         }
-      }
-
-      if (finalTranscript) {
-        setForm((prev) => ({
-          ...prev,
-          topic: prev.topic + (prev.topic ? " " : "") + finalTranscript,
-        }));
       }
     };
 

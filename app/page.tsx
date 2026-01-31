@@ -382,7 +382,7 @@ export default function Home() {
       )}
 
       {/* Main Container (iOS Safe Area handling) - Centered on desktop */}
-      <div className="relative h-full w-full max-w-md md:max-w-xl lg:max-w-2xl mx-auto flex flex-col px-5 pt-12 pb-3 sm:px-6 sm:pt-14 sm:pb-4">
+      <div className="relative h-full w-full max-w-md md:max-w-xl mx-auto flex flex-col px-5 pt-12 pb-3 sm:px-6 sm:pt-14 sm:pb-4">
 
         {/* App Bar Area */}
         <div className="flex items-center justify-between mb-2 sm:mb-4">
@@ -399,7 +399,12 @@ export default function Home() {
             </div>
           )}
 
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center relative">
+            <img
+              src="/logo.png"
+              alt="App Logo"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg shadow-md mb-1"
+            />
             <h2 className="text-white text-base font-bold tracking-tight leading-none">AI Voice Creator</h2>
             <span className="text-white/60 text-[10px] font-medium tracking-wide uppercase mt-0.5">Open Source Project</span>
           </div>
@@ -420,24 +425,19 @@ export default function Home() {
           {appState === "form" && (
             <>
               {/* Scrollable Form Area - flex-col with justify-between to spread content */}
-              <div className="flex-1 flex flex-col justify-between -mx-1 px-1 pb-2">
+              <div className="flex-1 flex flex-col justify-start -mx-1 px-1 pb-2 overflow-y-auto no-scrollbar gap-4 sm:gap-6">
                 {/* Top section: Headline + Topic */}
                 <div className="flex flex-col">
                   {/* Headline */}
-                  {/* Headline */}
-                  <div className="flex flex-col mb-5 sm:mb-5 text-center items-center justify-center gap-3 sm:gap-4">
-                    <div className="text-center order-1">
+                  <div className="flex flex-col mb-4 sm:mb-5 text-center items-center justify-center gap-1">
+                    <div className="text-center">
                       <h1 className="text-[#4a3a2a] text-lg sm:text-xl font-bold leading-none">Create Your Podcast</h1>
                       <p className="text-[#7a6a5a] text-[11px] sm:text-xs font-medium leading-none mt-1">Transform your ideas into audio</p>
                     </div>
-                    <img
-                      src="/logo.png"
-                      alt="App Logo"
-                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl shadow-md shadow-amber-500/20 order-2"
-                    />
                   </div>
 
                   {/* Topic Input Section - sin el botón de micro */}
+
                   <div>
                     <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1.5 ml-1">Topic</label>
                     <div className="glass-input rounded-xl md:rounded-lg p-3 md:p-3">
@@ -573,6 +573,8 @@ export default function Home() {
           )}
 
           {/* === GENERATING STATE === */}
+
+
           {/* === GENERATING STATE (Amber Harmonics Overlay) === */}
           {appState === "generating" && (
             <div className="fixed inset-0 z-50 bg-[#231b0f] text-white flex flex-col font-display overflow-hidden">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, MouseEvent } from "react";
+import { WheelPicker } from "./components/WheelPicker";
 
 type Language = "es" | "en" | "fr";
 
@@ -381,10 +382,10 @@ export default function Home() {
       )}
 
       {/* Main Container (iOS Safe Area handling) - Centered on desktop */}
-      <div className="relative h-full w-full max-w-md md:max-w-xl lg:max-w-2xl mx-auto flex flex-col px-6 pt-6 pb-4">
+      <div className="relative h-full w-full max-w-md md:max-w-xl lg:max-w-2xl mx-auto flex flex-col px-5 pt-12 pb-3 sm:px-6 sm:pt-14 sm:pb-4">
 
         {/* App Bar Area */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2 sm:mb-4">
           {appState !== "form" ? (
             <button
               onClick={reset}
@@ -414,146 +415,142 @@ export default function Home() {
         </div>
 
         {/* Clay-morphism Main Card - Scrollable content */}
-        <div className="clay-card flex-1 flex flex-col rounded-2xl p-4 overflow-hidden relative">
+        <div className="clay-card flex-1 flex flex-col rounded-2xl p-3 sm:p-4 overflow-hidden relative">
 
           {appState === "form" && (
             <>
-              {/* Scrollable Form Area */}
-              <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 pb-2 md:flex md:flex-col md:justify-evenly">
-                {/* Headline */}
-                <div className="mb-6 md:mb-4 text-center flex items-center justify-center gap-4 md:gap-3">
-                  <img
-                    src="/logo.png"
-                    alt="App Logo"
-                    className="w-14 h-14 md:w-12 md:h-12 rounded-xl shadow-md shadow-amber-500/20"
-                  />
-                  <div className="text-left">
-                    <h1 className="text-[#4a3a2a] text-2xl md:text-xl font-bold leading-none">Create Your Podcast</h1>
-                    <p className="text-[#7a6a5a] text-sm md:text-xs font-medium leading-none mt-1">Transform your ideas into audio</p>
+              {/* Scrollable Form Area - flex-col with justify-between to spread content */}
+              <div className="flex-1 flex flex-col justify-between -mx-1 px-1 pb-2">
+                {/* Top section: Headline + Topic */}
+                <div className="flex flex-col">
+                  {/* Headline */}
+                  {/* Headline */}
+                  <div className="flex flex-col mb-5 sm:mb-5 text-center items-center justify-center gap-3 sm:gap-4">
+                    <div className="text-center order-1">
+                      <h1 className="text-[#4a3a2a] text-lg sm:text-xl font-bold leading-none">Create Your Podcast</h1>
+                      <p className="text-[#7a6a5a] text-[11px] sm:text-xs font-medium leading-none mt-1">Transform your ideas into audio</p>
+                    </div>
+                    <img
+                      src="/logo.png"
+                      alt="App Logo"
+                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl shadow-md shadow-amber-500/20 order-2"
+                    />
+                  </div>
+
+                  {/* Topic Input Section - sin el botón de micro */}
+                  <div>
+                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1.5 ml-1">Topic</label>
+                    <div className="glass-input rounded-xl md:rounded-lg p-3 md:p-3">
+                      <textarea
+                        className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-16 md:h-14 p-0 text-sm md:text-sm font-normal leading-snug outline-none"
+                        placeholder={isListening ? "Listening..." : "What should the AI talk about?"}
+                        value={form.topic}
+                        onChange={(e) => updateField("topic", e.target.value)}
+                      ></textarea>
+                    </div>
                   </div>
                 </div>
 
-                {/* Topic Input Section */}
-                <div className="mb-5 md:mb-3">
-                  <label className="block text-[#4a3a2a] text-xs md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1 ml-1">The Topic</label>
-                  <div className="glass-input rounded-xl md:rounded-lg p-4 md:p-3 relative">
-                    <textarea
-                      className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-20 md:h-14 p-0 pr-12 text-base md:text-sm font-normal leading-snug outline-none"
-                      placeholder={isListening ? "Listening..." : "What should the AI talk about?"}
-                      value={form.topic}
-                      onChange={(e) => updateField("topic", e.target.value)}
-                    ></textarea>
-                    {speechSupported && (
-                      <button
-                        type="button"
-                        onClick={toggleListening}
-                        className={`
-                          absolute right-3 top-1/2 -translate-y-1/2 size-10 md:size-8 rounded-full flex items-center justify-center transition-all
-                          ${isListening
-                            ? "bg-red-500 text-white animate-pulse"
-                            : "bg-primary/10 text-primary hover:bg-primary/20"
-                          }
-                        `}
-                        title={isListening ? "Stop listening" : "Start voice input"}
-                      >
-                        <span className="material-symbols-outlined text-xl md:text-lg">
-                          {isListening ? "stop" : "mic"}
-                        </span>
-                      </button>
-                    )}
+                {/* Middle section: Big Mic Button */}
+                {speechSupported && (
+                  <div className="flex flex-col items-center py-4">
+                    <button
+                      type="button"
+                      onClick={toggleListening}
+                      className={`
+                        size-20 sm:size-20 rounded-2xl flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95
+                        ${isListening
+                          ? "bg-red-500 text-white animate-pulse shadow-red-500/30 rounded-full"
+                          : "bg-transparent shadow-amber-500/20"
+                        }
+                      `}
+                      title={isListening ? "Stop listening" : "Start voice input"}
+                    >
+                      {isListening ? (
+                        <span className="material-symbols-outlined text-3xl sm:text-3xl">stop</span>
+                      ) : (
+                        <img
+                          src="/logo_mic_v2.png"
+                          alt="Start Rec"
+                          className="w-full h-full object-cover rounded-2xl shadow-sm border-2 border-primary/20"
+                        />
+                      )}
+                    </button>
+                    <span className="text-[10px] text-[#7a6a5a] mt-2 uppercase tracking-wider font-medium">
+                      {isListening ? "Tap to stop" : "Tap to speak"}
+                    </span>
                   </div>
-                </div>
+                )}
 
-                {/* Content Type Grid */}
-                <div className="mb-5 md:mb-3">
-                  <label className="block text-[#4a3a2a] text-xs md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1 ml-1">Content Style</label>
-                  <div className="grid grid-cols-4 gap-3 md:gap-2">
-                    {contentTypes.map((type) => (
-                      <button
-                        key={type.value}
-                        onClick={() => updateField("contentType", type.value)}
-                        className={`
-                                        rounded-xl md:rounded-lg p-2 md:p-1.5 flex flex-col items-center justify-center gap-1.5 md:gap-1 text-center transition-all cursor-pointer border-2 h-16 md:h-12
-                                        ${form.contentType === type.value
-                            ? "bg-primary/10 border-primary"
-                            : "bg-white border-transparent shadow-sm hover:border-primary/30"
-                          }
-                                    `}
-                      >
-                        <span className={`material-symbols-outlined text-xl md:text-base text-primary`}>
-                          {type.icon}
-                        </span>
-                        <span className="text-[#4a3a2a] text-[10px] md:text-[9px] font-bold uppercase">{type.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Language Selection */}
-                <div className="mb-5 md:mb-3">
-                  <label className="block text-[#4a3a2a] text-xs md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1 ml-1">Voice Language</label>
-                  <div className="flex bg-[#f3f0ec] p-1.5 md:p-1 rounded-full gap-2 md:gap-1">
-                    {(["en", "es", "fr"] as Language[]).map((lang) => (
-                      <button
-                        key={lang}
-                        onClick={() => updateField("language", lang)}
-                        className={`
-                                        flex-1 py-2 md:py-1.5 rounded-full text-sm md:text-xs font-bold transition-all
-                                        ${form.language === lang
-                            ? "bg-white shadow-sm text-primary"
-                            : "text-[#a59585]"
-                          }
-                                    `}
-                      >
-                        {lang.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Voice Selection */}
-                <div className="mb-4 md:mb-2">
-                  <label className="block text-[#4a3a2a] text-xs md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1 ml-1">
-                    Select Voice <span className="text-amber-600 text-xs md:text-[10px] ml-1">PREMIUM</span>
-                  </label>
-                  <div className="flex justify-between px-1">
-                    {VOICES.filter(v => v.lang === form.language).length === 0 && (
-                      <p className="text-sm text-red-500 text-center">No voices found for {form.language}</p>
-                    )}
-                    {VOICES.filter(v => v.lang === form.language).map((voice) => (
-                      <button
-                        key={voice.id}
-                        onClick={() => updateField("voice", voice.id)}
-                        className="flex flex-col items-center gap-1.5 md:gap-1"
-                      >
-                        <div
+                {/* Bottom section: Style + Language/Voice */}
+                <div className="flex flex-col">
+                  {/* Content Type Grid */}
+                  <div className="mb-5 sm:mb-4">
+                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1.5 ml-1">Style</label>
+                    <div className="grid grid-cols-4 gap-2 md:gap-2">
+                      {contentTypes.map((type) => (
+                        <button
+                          key={type.value}
+                          onClick={() => updateField("contentType", type.value)}
                           className={`
-                            relative size-14 md:size-11 rounded-full flex items-center justify-center transition-all border-2
-                            ${form.voice === voice.id
-                              ? "bg-primary/10 border-primary shadow-md"
+                                          rounded-lg md:rounded-lg p-1.5 md:p-1.5 flex flex-col items-center justify-center gap-1 md:gap-1 text-center transition-all cursor-pointer border-2 h-14 md:h-12
+                                          ${form.contentType === type.value
+                              ? "bg-primary/10 border-primary"
                               : "bg-white border-transparent shadow-sm hover:border-primary/30"
                             }
-                          `}
+                                      `}
                         >
-                          <span className={`material-symbols-outlined text-2xl md:text-xl ${form.voice === voice.id ? "text-primary" : "text-[#a59585]"}`}>
-                            {voice.gender === "Male" ? "face" : "face_3"}
+                          <span className={`material-symbols-outlined text-lg md:text-base text-primary`}>
+                            {type.icon}
                           </span>
-                          {form.voice === voice.id && (
-                            <div className="absolute -top-0.5 -right-0.5">
-                              <div className="size-4 md:size-3 rounded-full bg-primary flex items-center justify-center">
-                                <span className="material-symbols-outlined text-white text-xs md:text-[10px]">check</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <span className={`text-xs md:text-[10px] font-bold ${form.voice === voice.id ? "text-primary" : "text-[#4a3a2a]"}`}>
-                          {voice.label}
-                        </span>
-                        <span className="text-[10px] md:text-[8px] uppercase font-medium text-[#a59585]">{voice.desc}</span>
-                      </button>
-                    ))}
+                          <span className="text-[#4a3a2a] text-[9px] md:text-[9px] font-bold uppercase">{type.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Language & Voice Wheel Pickers */}
+                  <div>
+                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1.5 ml-1 text-center">Language & Voice</label>
+                    <div className="flex gap-4">
+                      {/* Language Wheel */}
+                      <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-2 shadow-inner">
+                        <WheelPicker
+                          options={[
+                            { value: "es", label: "Español", sublabel: "Spanish" },
+                            { value: "en", label: "English", sublabel: "US" },
+                            { value: "fr", label: "Français", sublabel: "French" },
+                          ]}
+                          value={form.language}
+                          onChange={(val) => {
+                            updateField("language", val);
+                            // Reset voice when language changes
+                            const firstVoice = VOICES.find(v => v.lang === val);
+                            if (firstVoice) updateField("voice", firstVoice.id);
+                          }}
+                          itemHeight={44}
+                          visibleItems={3}
+                        />
+                      </div>
+
+                      {/* Voice Wheel */}
+                      <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-2 shadow-inner">
+                        <WheelPicker
+                          options={VOICES.filter(v => v.lang === form.language).map(v => ({
+                            value: v.id,
+                            label: v.label,
+                            sublabel: `${v.gender} · ${v.desc}`,
+                          }))}
+                          value={form.voice || VOICES.find(v => v.lang === form.language)?.id || ""}
+                          onChange={(val) => updateField("voice", val)}
+                          itemHeight={44}
+                          visibleItems={3}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
+
               </div>
 
               {/* Fixed Generate Button */}

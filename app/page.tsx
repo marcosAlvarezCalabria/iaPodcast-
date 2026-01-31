@@ -156,7 +156,8 @@ export default function Home() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
-    recognition.continuous = true;
+    // iOS Safari works much better with continuous = false
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = getSpeechLang(form.language);
 
@@ -167,6 +168,8 @@ export default function Home() {
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let finalTranscript = "";
 
+      // On iOS with continuous=false, usually the last result is the one we want
+      // But we still iterate to be safe across browsers
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
@@ -185,6 +188,7 @@ export default function Home() {
     recognition.onerror = (event) => {
       // Ignore non-critical errors
       if (event.error === "no-speech" || event.error === "aborted") {
+        setIsListening(false);
         return;
       }
       console.error("Speech recognition error:", event.error);
@@ -192,6 +196,7 @@ export default function Home() {
     };
 
     recognition.onend = () => {
+      // Auto-stop UI when silence is detected or sentence ends
       setIsListening(false);
     };
 
@@ -382,7 +387,7 @@ export default function Home() {
       )}
 
       {/* Main Container (iOS Safe Area handling) - Centered on desktop (Reduced top padding for mobile) */}
-      <div className="relative h-full w-full max-w-md md:max-w-xl mx-auto flex flex-col px-5 pt-5 pb-3 sm:px-6 sm:pt-14 sm:pb-4">
+      <div className="relative h-[100dvh] w-full max-w-md md:max-w-xl mx-auto flex flex-col px-5 pt-5 pb-3 sm:px-6 sm:pt-14 sm:pb-4">
 
         {/* App Bar Area (Reduced margin) */}
         <div className="flex items-center justify-between mb-1 sm:mb-4">

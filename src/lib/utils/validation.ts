@@ -14,6 +14,7 @@ export const JobInputSchema = z.object({
   contentType: z.nativeEnum(ContentType).default(ContentType.Reflection),
   targetAudience: z.string().trim().default("general"),
   format: z.nativeEnum(PodcastFormat).default(PodcastFormat.SoloHost),
+  voice: z.string().optional(),
 });
 
 // Type inference

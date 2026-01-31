@@ -382,7 +382,7 @@ export default function Home() {
       )}
 
       {/* Main Container (iOS Safe Area handling) - Centered on desktop (Reduced top padding for mobile) */}
-      <div className="relative h-full w-full max-w-md md:max-w-xl mx-auto flex flex-col px-5 pt-8 pb-3 sm:px-6 sm:pt-14 sm:pb-4">
+      <div className="relative h-full w-full max-w-md md:max-w-xl mx-auto flex flex-col px-5 pt-5 pb-3 sm:px-6 sm:pt-14 sm:pb-4">
 
         {/* App Bar Area (Reduced margin) */}
         <div className="flex items-center justify-between mb-1 sm:mb-4">
@@ -400,12 +400,12 @@ export default function Home() {
           )}
 
           <div className="flex flex-col items-center relative">
-              <img
-                src="/logo.png"
-                alt="App Logo"
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg shadow-md mb-1"
-              />
-            <h2 className="text-white text-base font-bold tracking-tight leading-none">AI Voice Creator</h2>
+            <img
+              src="/logo.png"
+              alt="App Logo"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg shadow-md mb-1"
+            />
+            <h2 className="text-white text-lg font-bold tracking-tight leading-none">AI Voice Creator</h2>
             <span className="text-white/60 text-[10px] font-medium tracking-wide uppercase mt-0.5">Open Source Project</span>
           </div>
 
@@ -424,12 +424,12 @@ export default function Home() {
 
           {appState === "form" && (
             <>
-              {/* Scrollable Form Area - Reduced Gap (gap-3 vs gap-4) */}
-              <div className="flex-1 flex flex-col justify-start -mx-1 px-1 pb-2 overflow-y-auto no-scrollbar gap-3 sm:gap-6">
+              {/* Scrollable Form Area - Reduced Gap (gap-2 vs gap-3) */}
+              <div className="flex-1 flex flex-col justify-start -mx-1 px-1 pb-2 overflow-y-auto no-scrollbar gap-2 sm:gap-6">
                 {/* Top section: Headline + Topic */}
                 <div className="flex flex-col">
-                  {/* Headline - Reduced margin (mb-2 vs mb-4) */}
-                  <div className="flex flex-col mb-2 sm:mb-5 text-center items-center justify-center gap-1">
+                  {/* Headline - Reduced margin (mb-1 vs mb-2) */}
+                  <div className="flex flex-col mb-1 sm:mb-5 text-center items-center justify-center gap-1">
                     <div className="text-center">
                       <h1 className="text-[#4a3a2a] text-lg sm:text-xl font-bold leading-none">Create Your Podcast</h1>
                       <p className="text-[#7a6a5a] text-[11px] sm:text-xs font-medium leading-none mt-1">Transform your ideas into audio</p>
@@ -438,10 +438,10 @@ export default function Home() {
 
                   {/* Topic Input Section */}
                   <div>
-                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1.5 ml-1">Topic</label>
-                    <div className="glass-input rounded-xl md:rounded-lg p-2.5 sm:p-3">
+                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1">Topic</label>
+                    <div className="glass-input rounded-xl md:rounded-lg p-2 sm:p-3">
                       <textarea
-                        className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-12 md:h-14 p-0 text-sm md:text-sm font-normal leading-snug outline-none"
+                        className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-10 md:h-14 p-0 text-sm md:text-sm font-normal leading-snug outline-none"
                         placeholder={isListening ? "Listening..." : "What should the AI talk about?"}
                         value={form.topic}
                         onChange={(e) => updateField("topic", e.target.value)}
@@ -450,14 +450,14 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Middle section: Big Mic Button - Reduced size (size-16 vs size-20) */}
+                {/* Middle section: Mic Button - Reduced size more (size-14 vs size-16) */}
                 {speechSupported && (
-                  <div className="flex flex-col items-center py-2 sm:py-4">
+                  <div className="flex flex-col items-center py-1 sm:py-4">
                     <button
                       type="button"
                       onClick={toggleListening}
                       className={`
-                        size-16 sm:size-20 rounded-2xl flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95
+                        size-14 sm:size-20 rounded-2xl flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95
                         ${isListening
                           ? "bg-red-500 text-white animate-pulse shadow-red-500/30 rounded-full"
                           : "bg-transparent shadow-amber-500/20"
@@ -466,7 +466,7 @@ export default function Home() {
                       title={isListening ? "Stop listening" : "Start voice input"}
                     >
                       {isListening ? (
-                        <span className="material-symbols-outlined text-3xl sm:text-3xl">stop</span>
+                        <span className="material-symbols-outlined text-2xl sm:text-3xl">stop</span>
                       ) : (
                         <img
                           src="/logo_mic_v2.png"
@@ -475,7 +475,7 @@ export default function Home() {
                         />
                       )}
                     </button>
-                    <span className="text-[10px] text-[#7a6a5a] mt-2 uppercase tracking-wider font-medium">
+                    <span className="text-[9px] text-[#7a6a5a] mt-1 uppercase tracking-wider font-medium">
                       {isListening ? "Tap to stop" : "Tap to speak"}
                     </span>
                   </div>
@@ -483,16 +483,16 @@ export default function Home() {
 
                 {/* Bottom section: Style + Language/Voice */}
                 <div className="flex flex-col">
-                  {/* Content Type Grid - Reduced Height of buttons (h-11 vs h-14) */}
-                  <div className="mb-4 sm:mb-4">
-                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1.5 ml-1">Style</label>
+                  {/* Content Type Grid - Reduced Height (h-10) */}
+                  <div className="mb-3 sm:mb-4">
+                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1">Style</label>
                     <div className="grid grid-cols-4 gap-2 md:gap-2">
                       {contentTypes.map((type) => (
                         <button
                           key={type.value}
                           onClick={() => updateField("contentType", type.value)}
                           className={`
-                                          rounded-lg md:rounded-lg p-1 sm:p-1.5 flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-center transition-all cursor-pointer border-2 h-11 md:h-12
+                                          rounded-lg md:rounded-lg p-1 sm:p-1.5 flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-center transition-all cursor-pointer border-2 h-10 md:h-12
                                           ${form.contentType === type.value
                               ? "bg-primary/10 border-primary"
                               : "bg-white border-transparent shadow-sm hover:border-primary/30"
@@ -510,10 +510,10 @@ export default function Home() {
 
                   {/* Language & Voice Wheel Pickers */}
                   <div>
-                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1.5 ml-1 text-center">Language & Voice</label>
-                    <div className="flex gap-3 sm:gap-4">
-                      {/* Language Wheel - Reduced itemHeight (40 vs 44) */}
-                      <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1.5 sm:p-2 shadow-inner">
+                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1 text-center">Language & Voice</label>
+                    <div className="flex gap-2 sm:gap-4">
+                      {/* Language Wheel - Reduced item height for tight fit (38) */}
+                      <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner">
                         <WheelPicker
                           options={[
                             { value: "es", label: "Español", sublabel: "Spanish" },
@@ -526,13 +526,13 @@ export default function Home() {
                             const firstVoice = VOICES.find(v => v.lang === val);
                             if (firstVoice) updateField("voice", firstVoice.id);
                           }}
-                          itemHeight={40}
+                          itemHeight={38}
                           visibleItems={3}
                         />
                       </div>
 
-                      {/* Voice Wheel - Reduced itemHeight (40 vs 44) */}
-                      <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1.5 sm:p-2 shadow-inner">
+                      {/* Voice Wheel */}
+                      <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner">
                         <WheelPicker
                           options={VOICES.filter(v => v.lang === form.language).map(v => ({
                             value: v.id,
@@ -541,7 +541,7 @@ export default function Home() {
                           }))}
                           value={form.voice || VOICES.find(v => v.lang === form.language)?.id || ""}
                           onChange={(val) => updateField("voice", val)}
-                          itemHeight={40}
+                          itemHeight={38}
                           visibleItems={3}
                         />
                       </div>
@@ -551,7 +551,7 @@ export default function Home() {
 
               </div>
 
-              {/* Fixed Generate Button - Reduced Padding (py-3 vs py-4) */}
+              {/* Fixed Generate Button - Reduced Padding (py-3) */}
               <div className="flex-none pt-2 md:pt-2">
                 <button
                   onClick={onSubmit}

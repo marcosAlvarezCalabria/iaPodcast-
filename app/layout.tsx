@@ -3,8 +3,35 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Podcast Creator Form",
-  description: "Create AI Podcasts instantly",
+  title: "AI Voice Creator - Create Podcasts Instantly",
+  description: "Transform your ideas into professional AI-generated podcasts. Choose your topic, style, and voice.",
+  metadataBase: new URL("https://podcast.marcos-alvarez.dev"),
+  openGraph: {
+    title: "AI Voice Creator",
+    description: "Transform your ideas into professional AI-generated podcasts",
+    url: "https://podcast.marcos-alvarez.dev",
+    siteName: "AI Voice Creator",
+    images: [
+      {
+        url: "/logo.png",
+        width: 512,
+        height: 512,
+        alt: "AI Voice Creator Logo",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI Voice Creator",
+    description: "Transform your ideas into professional AI-generated podcasts",
+    images: ["/logo.png"],
+  },
+  icons: {
+    icon: "/icon.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

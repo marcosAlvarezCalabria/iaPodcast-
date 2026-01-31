@@ -9,47 +9,53 @@ import type {
 import { ContentType } from "../types";
 import type { LLMProvider } from "./LLMProvider";
 
-const getContentTypePrompt = (contentType: ContentType) => {
+const getContentTypePrompt = (contentType: ContentType, language: string) => {
+  const lang = language === "es" ? "Spanish" : language === "fr" ? "French" : "English";
+
   const prompts = {
     [ContentType.Reflection]: {
-      role: "a modern Philosopher",
-      type: "Philosophical Reflection",
-      instructions: `1. ONLY ONE continuous paragraph.
-2. No greetings or farewells. Jump straight into the deep idea.
-3. Poetic but understandable style.
-4. One powerful central idea.
-5. NO headers or sections. Just pure text.`,
-      example: "Sometimes we think time slips away, but it's us who run aimlessly. Stop for a second. Breathe. Life isn't the destination—it's the path beneath your feet right now.",
+      systemRole: `You are a thoughtful narrator with a warm, intimate voice—like a wise friend sharing insights over coffee. You speak directly to the listener, making them feel understood. Your style is conversational yet profound, avoiding clichés and generic phrases.`,
+      instructions: `Write a personal reflection that feels like a genuine conversation:
+- Start with a specific observation or question that hooks the listener
+- Share ONE meaningful insight, not multiple disconnected ideas
+- Use "you" to connect directly with the listener
+- Include a concrete example or metaphor from everyday life
+- End with a thought that lingers, not a forced conclusion
+- Avoid: generic advice, obvious statements, motivational poster language
+- Write in ${lang}`,
     },
     [ContentType.Summary]: {
-      role: "an expert Journalist",
-      type: "Informative Summary",
-      instructions: `1. Clear structure: what, why, how.
-2. Concrete and verifiable facts.
-3. Direct and accessible language.
-4. No personal opinions.
-5. Maximum 3-4 key points in flowing prose.`,
-      example: "Artificial intelligence is transforming education through three key changes: personalized learning paths, universal access to knowledge, and innovative assessment methods. The future of learning is already here.",
+      systemRole: `You are an engaging science communicator like Neil deGrasse Tyson or a skilled documentary narrator. You make complex topics accessible without dumbing them down. You find the fascinating angle in any subject.`,
+      instructions: `Write an informative piece that makes the listener curious:
+- Open with the most surprising or counterintuitive fact about the topic
+- Explain the "why" behind things, not just the "what"
+- Use one vivid analogy to make abstract concepts tangible
+- Include a specific detail or number that sticks in memory
+- Connect it to something the listener experiences in daily life
+- Avoid: dry recitation of facts, Wikipedia-style summaries, obvious statements
+- Write in ${lang}`,
     },
     [ContentType.Story]: {
-      role: "a captivating Storyteller",
-      type: "Short Story",
-      instructions: `1. Start with a vivid scene or image.
-2. One central character or situation.
-3. Brief tension or conflict.
-4. Resolution or surprising twist.
-5. Sensory and evocative language.`,
-      example: "Maria found a letter under her door. No sender. It just said: 'The 3pm coffee changed my life.' She never went to cafes. But that day, she decided to go.",
+      systemRole: `You are a master storyteller in the tradition of short fiction—think Hemingway's brevity, Borges' imagination. Every word serves the narrative. You show, don't tell.`,
+      instructions: `Write a micro-story that creates a complete emotional arc:
+- Begin IN the action—no setup or backstory
+- Focus on ONE character in ONE moment of change
+- Use sensory details: what do they see, hear, feel?
+- Create tension through what's unsaid or implied
+- End with an image or line that reframes everything
+- Avoid: explaining emotions, happy endings, morals
+- Write in ${lang}`,
     },
     [ContentType.Explanation]: {
-      role: "a passionate Teacher",
-      type: "Educational Explanation",
-      instructions: `1. Simple concept first, details after.
-2. Use real-world analogies.
-3. Avoid unnecessary technical jargon.
-4. Include a surprising fact or "did you know".
-5. Close with practical application.`,
-      example: "Your brain uses 20% of your energy, even though it's only 2% of your body weight. It's like a small engine that never stops. That's why good sleep matters—it's when your brain does its cleaning.",
+      systemRole: `You are a brilliant teacher who makes complex ideas click. Like Richard Feynman, you can explain anything to anyone. You're genuinely excited about knowledge and that enthusiasm is contagious.`,
+      instructions: `Write an explanation that creates "aha!" moments:
+- Start with a question the listener didn't know they had
+- Build understanding step by step, each idea leading to the next
+- Use an unexpected analogy that makes the concept unforgettable
+- Include one "mind-blowing" fact that changes perspective
+- End with how this knowledge changes how we see the world
+- Avoid: textbook language, assuming prior knowledge, being condescending
+- Write in ${lang}`,
     },
   };
   return prompts[contentType];
@@ -79,38 +85,43 @@ export const createGroqProvider = (): LLMProvider => {
 
       ctx?.logger?.debug("groq:generateOutline", { topic: req.topic });
 
-      const prompt = `Eres un productor de podcasts profesional. Genera un outline estructurado para un episodio de podcast.
+      const lang = req.language === "es" ? "Spanish" : req.language === "fr" ? "French" : "English";
 
-TEMA: ${req.topic}
-DURACIÓN: ${req.durationMinutes} minutos
-IDIOMA: ${req.language}
-TONO: ${req.tone}
-AUDIENCIA: ${req.targetAudience}
-FORMATO: ${req.format}
+      const systemPrompt = `You are a creative content strategist who finds the most interesting angle on any topic. You don't create generic content—you find the unexpected hook that makes people want to listen.`;
 
-Responde SOLO con JSON válido (sin markdown, sin \`\`\`):
+      const userPrompt = `Create a compelling outline for a short audio piece about: "${req.topic}"
+
+REQUIREMENTS:
+- Language: ${lang}
+- Duration: Very short (30-45 seconds of audio)
+- Tone: ${req.tone}
+- Audience: ${req.targetAudience}
+- Content type: ${req.format}
+
+YOUR TASK:
+1. Find an unexpected or fascinating angle on this topic
+2. Create a title that sparks curiosity (not clickbait, genuinely intriguing)
+3. Structure 2-3 key points that build on each other
+
+Respond with ONLY valid JSON (no markdown, no backticks):
 {
-  "title": "Título atractivo del episodio",
+  "title": "An intriguing title in ${lang}",
   "sections": [
     {
-      "heading": "Nombre de la sección",
-      "bullets": ["Punto 1", "Punto 2", "Punto 3"]
+      "heading": "Section name",
+      "bullets": ["Key point 1", "Key point 2"]
     }
   ]
-}
-
-El outline debe tener:
-- Intro con hook (30 segundos)
-- 2-4 secciones principales
-- Cierre con call-to-action
-
-Genera el outline ahora:`;
+}`;
 
       try {
         const completion = await groq.chat.completions.create({
-          messages: [{ role: "user", content: prompt }],
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
           model: "llama-3.3-70b-versatile",
-          temperature: 0.7,
+          temperature: 0.8,
         });
 
         const text = completion.choices[0]?.message?.content || "";
@@ -150,36 +161,34 @@ Genera el outline ahora:`;
       ctx?.logger?.debug("groq:generateScript", { title: req.outline.title });
 
       const outlineText = req.outline.sections
-        .map((s) => `## ${s.heading}\n${s.bullets.map((b) => `- ${b}`).join("\n")}`)
-        .join("\n\n");
+        .map((s) => `- ${s.heading}: ${s.bullets.join(", ")}`)
+        .join("\n");
 
-      const contentPrompt = getContentTypePrompt(req.contentType);
+      const contentPrompt = getContentTypePrompt(req.contentType, req.language);
 
-      const prompt = `You are ${contentPrompt.role}. Write a "${contentPrompt.type}" of EXACTLY 30 SECONDS when read aloud.
+      const userPrompt = `TOPIC: "${req.outline.title}"
 
-TITLE: ${req.outline.title}
-DURATION: 30 seconds (Maximum 80-100 words)
-OUTPUT LANGUAGE: ${req.language === "es" ? "Spanish" : req.language === "fr" ? "French" : "English"}
-TONE: ${req.tone}
-AUDIENCE: ${req.targetAudience}
-
-OUTLINE:
+KEY POINTS TO COVER:
 ${outlineText}
 
-FORMAT INSTRUCTIONS:
+CONSTRAINTS:
+- Duration: 30-45 seconds when read aloud (approximately 80-120 words)
+- Tone: ${req.tone}
+- Target audience: ${req.targetAudience}
+
 ${contentPrompt.instructions}
 
-EXAMPLE:
-"${contentPrompt.example}"
-
-YOUR SCRIPT (Write only the ${contentPrompt.type.toLowerCase()} text, in the specified language):`;
+Write the script now. Output ONLY the script text, no titles, no labels, no explanations.`;
 
       try {
         const completion = await groq.chat.completions.create({
-          messages: [{ role: "user", content: prompt }],
+          messages: [
+            { role: "system", content: contentPrompt.systemRole },
+            { role: "user", content: userPrompt }
+          ],
           model: "llama-3.3-70b-versatile",
-          temperature: 0.7,
-          max_tokens: 4000,
+          temperature: 0.85,
+          max_tokens: 500,
         });
 
         const markdown = completion.choices[0]?.message?.content || "";

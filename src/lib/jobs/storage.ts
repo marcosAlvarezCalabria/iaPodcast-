@@ -153,3 +153,119 @@ export const getJobFileUrl = (jobId: string, filename: string): string => {
   const { data } = getSupabase().storage.from(BUCKET).getPublicUrl(path);
   return data.publicUrl;
 };
+
+// List all job folders in the bucket
+export const listAllJobs = async (): Promise<string[]> => {
+  const { data, error } = await getSupabase().storage.from(BUCKET).list("", {
+    limit: 1000,
+    sortBy: { column: "created_at", order: "desc" },
+  });
+
+  if (error) throw new Error(`Supabase List Error: ${error.message}`);
+
+  // Filter to only folders (job IDs)
+  return data?.filter((item) => item.id === null).map((item) => item.name) ?? [];
+};
+
+// Delete all files in a job folder
+export const deleteJob = async (jobId: string): Promise<void> => {
+  // First, list all files in the job folder
+  const { data: files, error: listError } = await getSupabase().storage
+    .from(BUCKET)
+    .list(jobId, { limit: 100 });
+
+  if (listError) throw new Error(`Supabase List Error (${jobId}): ${listError.message}`);
+
+  if (!files || files.length === 0) return;
+
+  // Delete all files in the folder
+  const filePaths = files.map((file) => `${jobId}/${file.name}`);
+
+  // Also check for sections subfolder
+  const { data: sections } = await getSupabase().storage
+    .from(BUCKET)
+    .list(`${jobId}/sections`, { limit: 100 });
+
+  if (sections && sections.length > 0) {
+    filePaths.push(...sections.map((file) => `${jobId}/sections/${file.name}`));
+  }
+
+  const { error: deleteError } = await getSupabase().storage
+    .from(BUCKET)
+    .remove(filePaths);
+
+  if (deleteError) throw new Error(`Supabase Delete Error (${jobId}): ${deleteError.message}`);
+};
+
+// Cleanup old or incomplete jobs
+export type CleanupResult = {
+  deleted: string[];
+  errors: Array<{ jobId: string; error: string }>;
+};
+
+export const cleanupJobs = async (options: {
+  maxAgeHours?: number; // Delete jobs older than this
+  deleteIncomplete?: boolean; // Delete QUEUED/RUNNING jobs older than threshold
+  incompleteThresholdMinutes?: number; // Consider incomplete if older than this
+  excludeJobIds?: string[]; // Never delete these jobs
+}): Promise<CleanupResult> => {
+  const {
+    maxAgeHours = 24,
+    deleteIncomplete = true,
+    incompleteThresholdMinutes = 30,
+    excludeJobIds = [],
+  } = options;
+
+  const result: CleanupResult = { deleted: [], errors: [] };
+  const now = Date.now();
+  const maxAgeMs = maxAgeHours * 60 * 60 * 1000;
+  const incompleteThresholdMs = incompleteThresholdMinutes * 60 * 1000;
+
+  try {
+    const jobIds = await listAllJobs();
+
+    for (const jobId of jobIds) {
+      // Skip excluded jobs (e.g., the job that triggered this cleanup)
+      if (excludeJobIds.includes(jobId)) continue;
+
+      try {
+        const state = await readJobState(jobId);
+        const createdAt = new Date(state.createdAt).getTime();
+        const age = now - createdAt;
+
+        let shouldDelete = false;
+
+        // Delete if older than maxAge
+        if (age > maxAgeMs) {
+          shouldDelete = true;
+        }
+
+        // Delete incomplete jobs older than threshold
+        if (
+          deleteIncomplete &&
+          (state.status === "QUEUED" || state.status === "RUNNING") &&
+          age > incompleteThresholdMs
+        ) {
+          shouldDelete = true;
+        }
+
+        if (shouldDelete) {
+          await deleteJob(jobId);
+          result.deleted.push(jobId);
+        }
+      } catch (err) {
+        result.errors.push({
+          jobId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+  } catch (err) {
+    result.errors.push({
+      jobId: "list",
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  return result;
+};

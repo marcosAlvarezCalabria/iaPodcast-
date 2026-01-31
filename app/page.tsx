@@ -179,6 +179,10 @@ export default function Home() {
     };
 
     recognition.onerror = (event) => {
+      // Ignore non-critical errors
+      if (event.error === "no-speech" || event.error === "aborted") {
+        return;
+      }
       console.error("Speech recognition error:", event.error);
       setIsListening(false);
     };

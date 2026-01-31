@@ -78,18 +78,21 @@ const defaultForm = {
 };
 
 const VOICES = [
-  // Spanish (Spain)
-  { id: "es-ES-Neural2-B", label: "Mateo", lang: "es", gender: "Male", desc: "Narrativo" },
-  { id: "es-ES-Neural2-A", label: "Lucia", lang: "es", gender: "Female", desc: "Suave" },
-  // Spanish (LatAm)
-  { id: "es-US-Neural2-B", label: "Diego", lang: "es", gender: "Male", desc: "Profundo" },
-  { id: "es-US-Neural2-A", label: "Mia", lang: "es", gender: "Female", desc: "Vibrante" },
+  // Spanish
+  { id: "es-ES-Neural2-B", label: "Mateo", lang: "es", gender: "Male", desc: "Narrator" },
+  { id: "es-ES-Wavenet-C", label: "Elena", lang: "es", gender: "Female", desc: "Warm" },
+  { id: "es-US-Neural2-B", label: "Diego", lang: "es", gender: "Male", desc: "Deep" },
+  { id: "es-US-Neural2-A", label: "Mia", lang: "es", gender: "Female", desc: "Vibrant" },
   // English
   { id: "en-US-Neural2-D", label: "James", lang: "en", gender: "Male", desc: "Radio Host" },
   { id: "en-US-Neural2-C", label: "Emma", lang: "en", gender: "Female", desc: "Professional" },
+  { id: "en-US-Neural2-A", label: "Michael", lang: "en", gender: "Male", desc: "Calm" },
+  { id: "en-US-Neural2-F", label: "Sarah", lang: "en", gender: "Female", desc: "Friendly" },
   // French
-  { id: "fr-FR-Neural2-B", label: "Claude", lang: "fr", gender: "Male", desc: "Élégant" },
-  { id: "fr-FR-Neural2-A", label: "Marie", lang: "fr", gender: "Female", desc: "Douce" },
+  { id: "fr-FR-Neural2-B", label: "Claude", lang: "fr", gender: "Male", desc: "Elegant" },
+  { id: "fr-FR-Neural2-A", label: "Marie", lang: "fr", gender: "Female", desc: "Soft" },
+  { id: "fr-FR-Neural2-D", label: "Pierre", lang: "fr", gender: "Male", desc: "Deep" },
+  { id: "fr-FR-Wavenet-C", label: "Sophie", lang: "fr", gender: "Female", desc: "Warm" },
 ];
 
 export default function Home() {

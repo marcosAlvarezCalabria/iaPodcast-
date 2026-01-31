@@ -216,7 +216,7 @@ export default function Home() {
       )}
 
       {/* Main Container (iOS Safe Area handling) - Centered on desktop */}
-      <div className="relative h-full w-full max-w-md mx-auto flex flex-col px-6 pt-6 pb-4">
+      <div className="relative h-full w-full max-w-md md:max-w-xl lg:max-w-2xl mx-auto flex flex-col px-6 pt-6 pb-4">
 
         {/* App Bar Area */}
         <div className="flex items-center justify-between mb-4">
@@ -249,31 +249,31 @@ export default function Home() {
         </div>
 
         {/* Clay-morphism Main Card - Scrollable content */}
-        <div className="clay-card flex-1 flex flex-col rounded-2xl p-5 overflow-hidden relative">
+        <div className="clay-card flex-1 flex flex-col rounded-2xl p-4 overflow-hidden relative">
 
           {appState === "form" && (
             <>
               {/* Scrollable Form Area */}
-              <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 pb-2">
+              <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 pb-2 md:flex md:flex-col md:justify-evenly">
                 {/* Headline */}
-                <div className="mb-6 text-center flex items-center justify-center gap-4">
+                <div className="mb-6 md:mb-4 text-center flex items-center justify-center gap-4 md:gap-3">
                   <img
                     src="/logo.png"
                     alt="App Logo"
-                    className="w-16 h-16 rounded-xl shadow-md shadow-amber-500/20"
+                    className="w-14 h-14 md:w-12 md:h-12 rounded-xl shadow-md shadow-amber-500/20"
                   />
                   <div className="text-left">
-                    <h1 className="text-[#4a3a2a] text-2xl font-bold leading-none">Create Your Podcast</h1>
-                    <p className="text-[#7a6a5a] text-sm font-medium leading-none mt-2">Transform your ideas into audio</p>
+                    <h1 className="text-[#4a3a2a] text-2xl md:text-xl font-bold leading-none">Create Your Podcast</h1>
+                    <p className="text-[#7a6a5a] text-sm md:text-xs font-medium leading-none mt-1">Transform your ideas into audio</p>
                   </div>
                 </div>
 
                 {/* Topic Input Section */}
-                <div className="mb-6">
-                  <label className="block text-[#4a3a2a] text-xs font-bold uppercase tracking-wider mb-2 ml-1">The Topic</label>
-                  <div className="glass-input rounded-xl p-3">
+                <div className="mb-5 md:mb-3">
+                  <label className="block text-[#4a3a2a] text-xs md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1 ml-1">The Topic</label>
+                  <div className="glass-input rounded-xl md:rounded-lg p-4 md:p-3">
                     <textarea
-                      className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-14 p-0 text-lg font-normal leading-snug outline-none"
+                      className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-20 md:h-14 p-0 text-base md:text-sm font-normal leading-snug outline-none"
                       placeholder="What should the AI talk about?"
                       value={form.topic}
                       onChange={(e) => updateField("topic", e.target.value)}
@@ -282,40 +282,40 @@ export default function Home() {
                 </div>
 
                 {/* Content Type Grid */}
-                <div className="mb-6">
-                  <label className="block text-[#4a3a2a] text-xs font-bold uppercase tracking-wider mb-2 ml-1">Content Style</label>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="mb-5 md:mb-3">
+                  <label className="block text-[#4a3a2a] text-xs md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1 ml-1">Content Style</label>
+                  <div className="grid grid-cols-4 gap-3 md:gap-2">
                     {contentTypes.map((type) => (
                       <button
                         key={type.value}
                         onClick={() => updateField("contentType", type.value)}
                         className={`
-                                        rounded-lg p-2.5 flex flex-row items-center justify-center gap-2.5 text-center transition-all cursor-pointer border-2 h-12
+                                        rounded-xl md:rounded-lg p-2 md:p-1.5 flex flex-col items-center justify-center gap-1.5 md:gap-1 text-center transition-all cursor-pointer border-2 h-16 md:h-12
                                         ${form.contentType === type.value
                             ? "bg-primary/10 border-primary"
                             : "bg-white border-transparent shadow-sm hover:border-primary/30"
                           }
                                     `}
                       >
-                        <span className={`material-symbols-outlined text-xl text-primary`}>
+                        <span className={`material-symbols-outlined text-xl md:text-base text-primary`}>
                           {type.icon}
                         </span>
-                        <span className="text-[#4a3a2a] text-xs font-bold uppercase">{type.label}</span>
+                        <span className="text-[#4a3a2a] text-[10px] md:text-[9px] font-bold uppercase">{type.label}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* Language Selection */}
-                <div className="mb-6">
-                  <label className="block text-[#4a3a2a] text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">Voice Language</label>
-                  <div className="flex bg-[#f3f0ec] p-1.5 rounded-full gap-2">
+                <div className="mb-5 md:mb-3">
+                  <label className="block text-[#4a3a2a] text-xs md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1 ml-1">Voice Language</label>
+                  <div className="flex bg-[#f3f0ec] p-1.5 md:p-1 rounded-full gap-2 md:gap-1">
                     {(["en", "es", "fr"] as Language[]).map((lang) => (
                       <button
                         key={lang}
                         onClick={() => updateField("language", lang)}
                         className={`
-                                        flex-1 py-1.5 rounded-full text-xs font-bold transition-all
+                                        flex-1 py-2 md:py-1.5 rounded-full text-sm md:text-xs font-bold transition-all
                                         ${form.language === lang
                             ? "bg-white shadow-sm text-primary"
                             : "text-[#a59585]"
@@ -329,43 +329,44 @@ export default function Home() {
                 </div>
 
                 {/* Voice Selection */}
-                <div className="mb-6">
-                  <label className="block text-[#4a3a2a] text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
-                    Select Voice <span className="text-amber-600 text-[10px] ml-1">PREMIUM</span>
+                <div className="mb-4 md:mb-2">
+                  <label className="block text-[#4a3a2a] text-xs md:text-[10px] font-bold uppercase tracking-wider mb-2 md:mb-1 ml-1">
+                    Select Voice <span className="text-amber-600 text-xs md:text-[10px] ml-1">PREMIUM</span>
                   </label>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="flex justify-between px-1">
                     {VOICES.filter(v => v.lang === form.language).length === 0 && (
-                      <p className="col-span-2 text-xs text-red-500 text-center">No voices found for {form.language}</p>
+                      <p className="text-sm text-red-500 text-center">No voices found for {form.language}</p>
                     )}
                     {VOICES.filter(v => v.lang === form.language).map((voice) => (
                       <button
                         key={voice.id}
                         onClick={() => updateField("voice", voice.id)}
-                        className={`
-                          relative overflow-hidden rounded-lg p-2 flex flex-row items-center gap-3 transition-all text-left border-2
-                          ${form.voice === voice.id
-                            ? "bg-white border-primary shadow-sm"
-                            : "bg-white/50 border-transparent hover:bg-white hover:border-primary/20"
-                          }
-                        `}
+                        className="flex flex-col items-center gap-1.5 md:gap-1"
                       >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className={`text-xs font-bold ${form.voice === voice.id ? "text-primary" : "text-[#4a3a2a]"}`}>
-                              {voice.label}
-                            </span>
-                            <span className="text-[9px] uppercase font-bold text-[#a59585] tracking-wider">{voice.desc}</span>
-                          </div>
+                        <div
+                          className={`
+                            relative size-14 md:size-11 rounded-full flex items-center justify-center transition-all border-2
+                            ${form.voice === voice.id
+                              ? "bg-primary/10 border-primary shadow-md"
+                              : "bg-white border-transparent shadow-sm hover:border-primary/30"
+                            }
+                          `}
+                        >
+                          <span className={`material-symbols-outlined text-2xl md:text-xl ${form.voice === voice.id ? "text-primary" : "text-[#a59585]"}`}>
+                            {voice.gender === "Male" ? "face" : "face_3"}
+                          </span>
+                          {form.voice === voice.id && (
+                            <div className="absolute -top-0.5 -right-0.5">
+                              <div className="size-4 md:size-3 rounded-full bg-primary flex items-center justify-center">
+                                <span className="material-symbols-outlined text-white text-xs md:text-[10px]">check</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <span className="material-symbols-outlined text-base opacity-40 shrink-0">
-                          {voice.gender === "Male" ? "face" : "face_3"}
+                        <span className={`text-xs md:text-[10px] font-bold ${form.voice === voice.id ? "text-primary" : "text-[#4a3a2a]"}`}>
+                          {voice.label}
                         </span>
-
-                        {form.voice === voice.id && (
-                          <div className="absolute top-0 right-0 p-0.5">
-                            <div className="size-1.5 rounded-full bg-primary/20 animate-ping" />
-                          </div>
-                        )}
+                        <span className="text-[10px] md:text-[8px] uppercase font-medium text-[#a59585]">{voice.desc}</span>
                       </button>
                     ))}
                   </div>
@@ -373,17 +374,17 @@ export default function Home() {
               </div>
 
               {/* Fixed Generate Button */}
-              <div className="flex-none pt-3">
+              <div className="flex-none pt-3 md:pt-2">
                 <button
                   onClick={onSubmit}
                   disabled={!form.topic}
                   className={`
-                                clay-button w-full bg-primary hover:bg-primary-dark text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 group relative overflow-hidden
+                                clay-button w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 md:py-3 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 group relative overflow-hidden
                                 ${!form.topic ? "opacity-50 cursor-not-allowed" : ""}
                             `}
                 >
-                  <span className="material-symbols-outlined text-xl">bolt</span>
-                  <span className="text-sm">Generate Voice</span>
+                  <span className="material-symbols-outlined text-xl md:text-lg">bolt</span>
+                  <span className="text-base md:text-sm">Generate Voice</span>
                   {/* Subtle pulse effect overlay */}
                   <div className="absolute inset-0 bg-white/20 opacity-0 group-active:opacity-100 transition-opacity"></div>
                 </button>

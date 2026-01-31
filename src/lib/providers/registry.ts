@@ -6,27 +6,19 @@ import {
 import type { ProviderFailure } from "./errors";
 import type { LLMProvider } from "./llm/LLMProvider";
 import { createGroqProvider } from "./llm/groq";
-import { createMockLLMProvider } from "./llm/mock";
 import type { TTSProvider } from "./tts/TTSProvider";
-import { createCloudflareTTSProvider } from "./tts/cloudflare";
-import { createEdgeTTSProvider } from "./tts/edge";
-import { createMockTTSProvider } from "./tts/mock";
 import { createGoogleTTSProvider } from "./tts/google";
 
 export type Provider = LLMProvider | TTSProvider;
 
 export const DEFAULT_LLM_PROVIDER = "groq" as const;
-export const DEFAULT_TTS_PROVIDER = "edge" as const;
+export const DEFAULT_TTS_PROVIDER = "google" as const;
 
 export const providersRegistry = {
   llm: {
-    mock: createMockLLMProvider,
     groq: createGroqProvider,
   },
   tts: {
-    edge: createEdgeTTSProvider,
-    mock: createMockTTSProvider,
-    cloudflare: createCloudflareTTSProvider,
     google: createGoogleTTSProvider,
   },
 } as const;

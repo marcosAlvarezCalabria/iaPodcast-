@@ -189,6 +189,26 @@ export const runJob = async (jobId: string): Promise<void> => {
     });
 
     await setJobStatus(jobId, "DONE", "finalize", 100, "Job complete");
+
+    // USAGE ANALYTICS LOGGING
+    // This structured log allows tracking costs via Cloudflare Logs
+    console.log(JSON.stringify({
+      event: "USAGE_SUMMARY",
+      timestamp: new Date().toISOString(),
+      jobId,
+      metadata: {
+        language: metadata.input.language,
+        voice: metadata.input.voice,
+        topic: metadata.input.topic,
+        durationBytes: finalAudio.length,
+      },
+      usage: usageRecords,
+      totalCostEstimate: {
+        // Rough estimation for quick insight (adjust rates as needed)
+        groqTokens: usageRecords.filter(u => u.provider === "groq").reduce((acc, u) => acc + (u.totalTokens || 0), 0),
+        googleChars: usageRecords.filter(u => u.provider === "google").reduce((acc, u) => acc + (u.inputCharacters || 0), 0),
+      }
+    }));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     logger.error("Job failed", { error });

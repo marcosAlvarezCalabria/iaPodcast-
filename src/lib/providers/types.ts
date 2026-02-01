@@ -58,6 +58,7 @@ export type Usage = {
   inputTokens?: number;
   outputTokens?: number;
   totalTokens?: number;
+  inputCharacters?: number;
   audioSecondsIn?: number;
   audioSecondsOut?: number;
   provider?: string;

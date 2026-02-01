@@ -59,6 +59,12 @@ export const createGoogleTTSProvider = (): TTSProvider => {
                     voice: name,
                 });
 
+                ctx?.onUsage?.({
+                    provider: "google",
+                    model: "neural2",
+                    inputCharacters: req.text.length,
+                });
+
                 const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
                 const response = await fetch(url, {

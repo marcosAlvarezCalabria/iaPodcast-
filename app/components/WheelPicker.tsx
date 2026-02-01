@@ -178,10 +178,10 @@ export function WheelPicker({
     };
   }, [handleDragStart, handleDragMove, handleDragEnd, isDragging]);
 
+  const [scrollTop, setScrollTop] = useState(0);
+
   // Calculate item styles based on position
   const getItemStyle = (index: number) => {
-    if (!containerRef.current) return {};
-    const scrollTop = containerRef.current.scrollTop;
     const itemCenter = index * itemHeight + itemHeight / 2;
     const containerCenter = scrollTop + totalHeight / 2;
     const distance = (itemCenter - containerCenter) / itemHeight;
@@ -198,13 +198,12 @@ export function WheelPicker({
     };
   };
 
-  // Force re-render on scroll for 3D effect
-  const [, setScrollPosition] = useState(0);
+  // Sync scroll position for 3D effect
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const onScroll = () => {
-      setScrollPosition(container.scrollTop);
+      setScrollTop(container.scrollTop);
       handleScroll();
     };
     container.addEventListener("scroll", onScroll);

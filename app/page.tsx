@@ -525,167 +525,164 @@ export default function Home() {
             <>
               {/* Scrollable Form Area - Reduced Gap (gap-2 vs gap-3) */}
               <div className="flex-1 flex flex-col justify-start -mx-1 px-1 pb-2 overflow-y-auto no-scrollbar gap-2 sm:gap-4">
-                {/* Top section: Headline + Topic */}
-                <div className="flex flex-col">
-                  {/* Headline - Reduced margin (mb-1 vs mb-2) */}
-                  <div className="flex flex-col mb-1 sm:mb-2 text-center items-center justify-center gap-1">
-                    <div className="text-center">
-                      <h1 className="text-[#4a3a2a] text-lg sm:text-xl font-bold leading-none">Create Your Podcast</h1>
-                      <p className="text-[#7a6a5a] text-[11px] sm:text-xs font-medium leading-none mt-1">Transform your ideas into audio</p>
-                    </div>
-                  </div>
 
-                  {/* Topic Input Section */}
-                  <div>
-                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1">Topic</label>
-                    <div className="glass-input rounded-xl md:rounded-lg p-2 sm:p-3">
+                {/* Top: Headline */}
+                <div className="flex flex-col mb-1 sm:mb-2 text-center items-center justify-center gap-1">
+                  <div className="text-center">
+                    <h1 className="text-[#4a3a2a] text-lg sm:text-xl font-bold leading-none">Create Your Podcast</h1>
+                    <p className="text-[#7a6a5a] text-[11px] sm:text-xs font-medium leading-none mt-1">Transform your ideas into audio</p>
+                  </div>
+                </div>
+
+                {/* MAIN INPUT AREA (WhatsApp Style) */}
+                <div className="flex flex-col gap-3">
+                  <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider ml-1 mb-0.5">Topic & Recording</label>
+
+                  {/* Row: Input + Mic */}
+                  <div className="flex items-center gap-2">
+                    {/* Text Area (Grows) */}
+                    <div className="glass-input rounded-xl p-2 sm:p-3 flex-1 transition-all focus-within:ring-2 focus-within:ring-primary/20">
                       <textarea
-                        className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-10 md:h-12 p-0 text-sm md:text-sm font-normal leading-snug outline-none"
-                        placeholder={isRecording ? "Recording..." : isTranscribing ? "Processing..." : "What should the AI talk about?"}
+                        className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-12 md:h-14 p-0 text-sm md:text-sm font-normal leading-snug outline-none"
+                        placeholder={isRecording ? "Recording..." : isTranscribing ? "Processing..." : "What shall we talk about?"}
                         value={form.topic}
                         onChange={(e) => updateField("topic", e.target.value)}
                       ></textarea>
                     </div>
-                  </div>
-                </div>
 
-                {/* Middle section: Mic Button - Hold to Speak */}
-                <div className="flex flex-col items-center py-1 sm:py-2">
-                  <button
-                    type="button"
-                    onMouseDown={startRecording}
-                    onMouseUp={stopRecording}
-                    onMouseLeave={stopRecording}
-                    onTouchStart={startRecording}
-                    onTouchEnd={stopRecording}
-                    // Prevent context menu on long press
-                    onContextMenu={(e) => e.preventDefault()}
-                    className={`
-                        size-14 sm:size-16 rounded-2xl flex items-center justify-center transition-all shadow-lg select-none
-                        ${isRecording
-                        ? "bg-red-500 text-white scale-95 ring-4 ring-red-500/30"
-                        : isTranscribing
-                          ? "bg-amber-500/20 text-white animate-pulse active:scale-95"
-                          : "bg-transparent shadow-amber-500/20 hover:scale-105 active:scale-95"
-                      }
-                      `}
-                    title="Hold to speak"
-                  >
-                    {isRecording ? (
-                      <span className="material-symbols-outlined text-2xl sm:text-3xl animate-pulse">mic</span>
-                    ) : isTranscribing ? (
-                      <span className="material-symbols-outlined text-2xl sm:text-3xl animate-spin">sync</span>
-                    ) : (
-                      <img
-                        src="/logo_mic_v2.png"
-                        alt="Start Rec"
-                        className="w-full h-full object-cover rounded-2xl shadow-sm border-2 border-primary/20 pointer-events-none"
-                      />
-                    )}
-                  </button>
-                  <span className="text-[9px] text-[#7a6a5a] mt-1 uppercase tracking-wider font-medium select-none">
-                    {isRecording ? "Release to stop" : isTranscribing ? "Transcribing..." : "Hold to speak"}
+                    {/* Mic Button (Fixed) */}
+                    <button
+                      type="button"
+                      onMouseDown={startRecording}
+                      onMouseUp={stopRecording}
+                      onMouseLeave={stopRecording}
+                      onTouchStart={startRecording}
+                      onTouchEnd={stopRecording}
+                      onContextMenu={(e) => e.preventDefault()}
+                      className={`
+                          flex-none size-14 md:size-16 rounded-2xl flex items-center justify-center transition-all shadow-lg select-none z-10
+                          ${isRecording
+                          ? "bg-red-500 text-white scale-95 ring-4 ring-red-500/30"
+                          : isTranscribing
+                            ? "bg-amber-500/20 text-white animate-pulse active:scale-95"
+                            : "bg-transparent shadow-amber-500/20 hover:scale-105 active:scale-95"
+                        }
+                        `}
+                      title="Hold to speak"
+                    >
+                      {isRecording ? (
+                        <span className="material-symbols-outlined text-2xl md:text-3xl animate-pulse">mic</span>
+                      ) : isTranscribing ? (
+                        <span className="material-symbols-outlined text-2xl md:text-3xl animate-spin">sync</span>
+                      ) : (
+                        <img
+                          src="/logo_mic_v2.png"
+                          alt="Start Rec"
+                          className="w-full h-full object-cover rounded-2xl shadow-sm border-2 border-primary/20 pointer-events-none"
+                        />
+                      )}
+                    </button>
+                  </div>
+                  <span className="text-[9px] text-[#7a6a5a] text-right pr-2 -mt-1 uppercase tracking-wider font-medium select-none">
+                    {isRecording ? "Release to stop" : isTranscribing ? "Transcribing..." : "Hold mic to speak"}
                   </span>
                 </div>
 
-                {/* Bottom section: Style + Language/Voice */}
-                <div className="flex flex-col">
-                  {/* Content Type Grid - Reduced Height (h-10) */}
-                  <div className="mb-3 sm:mb-3">
-                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1">Style</label>
-                    <div className="grid grid-cols-4 gap-2 md:gap-2">
-                      {contentTypes.map((type) => (
-                        <button
-                          key={type.value}
-                          onClick={() => updateField("contentType", type.value)}
-                          className={`
-                                          rounded-lg md:rounded-lg p-1 sm:p-1.5 flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-center transition-all cursor-pointer border-2 h-10 md:h-10
-                                          ${form.contentType === type.value
-                              ? "bg-primary/10 border-primary"
-                              : "bg-white border-transparent shadow-sm hover:border-primary/30"
-                            }
-                                      `}
-                        >
-                          <span className={`material-symbols-outlined text-lg md:text-base text-primary`}>
-                            {type.icon}
-                          </span>
-                          <span className="text-[#4a3a2a] text-[8px] sm:text-[9px] font-bold uppercase">{type.label}</span>
-                        </button>
-                      ))}
-                    </div>
+                {/* "Buttons Below The Box" -> Style Grid */}
+                <div className="flex flex-col mt-1">
+                  <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1">Style</label>
+                  <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar md:grid md:grid-cols-4 md:overflow-visible">
+                    {contentTypes.map((type) => (
+                      <button
+                        key={type.value}
+                        onClick={() => updateField("contentType", type.value)}
+                        className={`
+                                        flex-none w-24 md:w-auto rounded-xl p-2 md:p-2 flex flex-col items-center justify-center gap-1 text-center transition-all cursor-pointer border-2 h-16 md:h-20
+                                        ${form.contentType === type.value
+                            ? "bg-primary/10 border-primary"
+                            : "bg-white/40 border-transparent shadow-sm hover:border-primary/30"
+                          }
+                                    `}
+                      >
+                        <span className={`material-symbols-outlined text-xl md:text-2xl text-primary`}>
+                          {type.icon}
+                        </span>
+                        <span className="text-[#4a3a2a] text-[9px] sm:text-[10px] font-bold uppercase leading-tight">{type.label}</span>
+                      </button>
+                    ))}
                   </div>
+                </div>
 
-                  {/* Language & Voice Wheel Pickers */}
-                  <div>
-                    <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1 text-center">Language & Voice</label>
-                    <div className="flex gap-2 sm:gap-4">
-                      {/* Language Wheel - Reduced item height for tight fit (38) */}
-                      <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner">
-                        <WheelPicker
-                          options={[
-                            { value: "en", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1fa-1f1f8.png" alt="US" className="w-4 h-4" /><span>English</span></div>), sublabel: "US" },
-                            { value: "es", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ea-1f1f8.png" alt="ES" className="w-4 h-4" /><span>Español</span></div>), sublabel: "Spanish" },
-                            { value: "fr", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1eb-1f1f7.png" alt="FR" className="w-4 h-4" /><span>Français</span></div>), sublabel: "French" },
-                            { value: "zh", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1e8-1f1f3.png" alt="CN" className="w-4 h-4" /><span>Chinese</span></div>), sublabel: "Mandarin" },
-                            { value: "hi", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ee-1f1f3.png" alt="IN" className="w-4 h-4" /><span>Hindi</span></div>), sublabel: "India" },
-                            { value: "ar", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f8-1f1e6.png" alt="SA" className="w-4 h-4" /><span>Arabic</span></div>), sublabel: "General" },
-                            { value: "pt", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1e7-1f1f7.png" alt="BR" className="w-4 h-4" /><span>Português</span></div>), sublabel: "Brazil" },
-                            { value: "ru", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f7-1f1fa.png" alt="RU" className="w-4 h-4" /><span>Russian</span></div>), sublabel: "Russia" },
-                            { value: "de", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1e9-1f1ea.png" alt="DE" className="w-4 h-4" /><span>Deutsch</span></div>), sublabel: "German" },
-                            { value: "ja", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ef-1f1f5.png" alt="JP" className="w-4 h-4" /><span>Japanese</span></div>), sublabel: "Japan" },
-                            { value: "id", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ee-1f1e9.png" alt="ID" className="w-4 h-4" /><span>Indonesian</span></div>), sublabel: "Indonesia" },
-                            { value: "ko", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f0-1f1f7.png" alt="KR" className="w-4 h-4" /><span>Korean</span></div>), sublabel: "Korea" },
-                            { value: "it", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ee-1f1f9.png" alt="IT" className="w-4 h-4" /><span>Italiano</span></div>), sublabel: "Italian" },
-                            { value: "tr", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f9-1f1f7.png" alt="TR" className="w-4 h-4" /><span>Turkish</span></div>), sublabel: "Turkey" },
-                            { value: "nl", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f3-1f1f1.png" alt="NL" className="w-4 h-4" /><span>Dutch</span></div>), sublabel: "Netherl." },
-                          ]}
-                          value={form.language}
-                          onChange={(val) => {
-                            updateField("language", val);
-                            const firstVoice = VOICES.find(v => v.lang === val);
-                            if (firstVoice) updateField("voice", firstVoice.id);
-                          }}
-                          itemHeight={50}
-                          visibleItems={3}
-                        />
-                      </div>
+                {/* Bottom: Language & Voice */}
+                <div className="mt-1">
+                  <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1">Voice & Language</label>
+                  <div className="flex gap-2 sm:gap-4 h-32">
+                    {/* Language Wheel */}
+                    <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner">
+                      <WheelPicker
+                        options={[
+                          { value: "en", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1fa-1f1f8.png" alt="US" className="w-4 h-4" /><span>English</span></div>), sublabel: "US" },
+                          { value: "es", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ea-1f1f8.png" alt="ES" className="w-4 h-4" /><span>Español</span></div>), sublabel: "Spanish" },
+                          { value: "fr", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1eb-1f1f7.png" alt="FR" className="w-4 h-4" /><span>Français</span></div>), sublabel: "French" },
+                          { value: "zh", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1e8-1f1f3.png" alt="CN" className="w-4 h-4" /><span>Chinese</span></div>), sublabel: "Mandarin" },
+                          { value: "hi", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ee-1f1f3.png" alt="IN" className="w-4 h-4" /><span>Hindi</span></div>), sublabel: "India" },
+                          { value: "ar", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f8-1f1e6.png" alt="SA" className="w-4 h-4" /><span>Arabic</span></div>), sublabel: "General" },
+                          { value: "pt", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1e7-1f1f7.png" alt="BR" className="w-4 h-4" /><span>Português</span></div>), sublabel: "Brazil" },
+                          { value: "ru", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f7-1f1fa.png" alt="RU" className="w-4 h-4" /><span>Russian</span></div>), sublabel: "Russia" },
+                          { value: "de", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1e9-1f1ea.png" alt="DE" className="w-4 h-4" /><span>Deutsch</span></div>), sublabel: "German" },
+                          { value: "ja", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ef-1f1f5.png" alt="JP" className="w-4 h-4" /><span>Japanese</span></div>), sublabel: "Japan" },
+                          { value: "id", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ee-1f1e9.png" alt="ID" className="w-4 h-4" /><span>Indonesian</span></div>), sublabel: "Indonesia" },
+                          { value: "ko", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f0-1f1f7.png" alt="KR" className="w-4 h-4" /><span>Korean</span></div>), sublabel: "Korea" },
+                          { value: "it", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ee-1f1f9.png" alt="IT" className="w-4 h-4" /><span>Italiano</span></div>), sublabel: "Italian" },
+                          { value: "tr", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f9-1f1f7.png" alt="TR" className="w-4 h-4" /><span>Turkish</span></div>), sublabel: "Turkey" },
+                          { value: "nl", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f3-1f1f1.png" alt="NL" className="w-4 h-4" /><span>Dutch</span></div>), sublabel: "Netherl." },
+                        ]}
+                        value={form.language}
+                        onChange={(val) => {
+                          updateField("language", val);
+                          const firstVoice = VOICES.find(v => v.lang === val);
+                          if (firstVoice) updateField("voice", firstVoice.id);
+                        }}
+                        itemHeight={50}
+                        visibleItems={3}
+                      />
+                    </div>
 
-                      {/* Voice Wheel */}
-                      <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner relative">
-                        <WheelPicker
-                          options={VOICES.filter(v => v.lang === form.language).map(v => {
-                            const isSelected = v.id === (form.voice || VOICES.find(x => x.lang === form.language)?.id);
-                            return {
-                              value: v.id,
-                              label: (
-                                <div className="flex items-center justify-between w-full px-2">
-                                  <span>{v.label}</span>
-                                  {isSelected && (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        playPreview(v.id);
-                                      }}
-                                      className="w-6 h-6 rounded-full bg-primary/20 hover:bg-primary/40 text-primary flex items-center justify-center transition-all active:scale-95 ml-2"
-                                      title="Preview Voice"
-                                    >
-                                      <span className="material-symbols-outlined text-sm">
-                                        {isPlayingPreview && previewAudioRef.current && !previewAudioRef.current.paused ? "stop" : "play_arrow"}
-                                      </span>
-                                    </button>
-                                  )}
-                                </div>
-                              ),
-                              sublabel: `${v.gender} · ${v.desc}`,
-                            };
-                          })}
-                          value={form.voice || VOICES.find(v => v.lang === form.language)?.id || ""}
-                          onChange={(val) => updateField("voice", val)}
-                          itemHeight={50}
-                          visibleItems={3}
-                        />
-                      </div>
+                    {/* Voice Wheel */}
+                    <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner relative">
+                      <WheelPicker
+                        options={VOICES.filter(v => v.lang === form.language).map(v => {
+                          const isSelected = v.id === (form.voice || VOICES.find(x => x.lang === form.language)?.id);
+                          return {
+                            value: v.id,
+                            label: (
+                              <div className="flex items-center justify-between w-full px-2">
+                                <span>{v.label}</span>
+                                {isSelected && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      playPreview(v.id);
+                                    }}
+                                    className="w-6 h-6 rounded-full bg-primary/20 hover:bg-primary/40 text-primary flex items-center justify-center transition-all active:scale-95 ml-2"
+                                    title="Preview Voice"
+                                  >
+                                    <span className="material-symbols-outlined text-sm">
+                                      {isPlayingPreview && previewAudioRef.current && !previewAudioRef.current.paused ? "stop" : "play_arrow"}
+                                    </span>
+                                  </button>
+                                )}
+                              </div>
+                            ),
+                            sublabel: `${v.gender} · ${v.desc}`,
+                          };
+                        })}
+                        value={form.voice || VOICES.find(v => v.lang === form.language)?.id || ""}
+                        onChange={(val) => updateField("voice", val)}
+                        itemHeight={50}
+                        visibleItems={3}
+                      />
                     </div>
                   </div>
                 </div>

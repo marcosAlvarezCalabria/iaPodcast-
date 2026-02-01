@@ -567,30 +567,21 @@ export default function Home() {
                       <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner">
                         <WheelPicker
                           options={[
-                            {
-                              value: "es", label: (
-                                <div className="flex items-center gap-1.5">
-                                  <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ea-1f1f8.png" alt="ES" className="w-4 h-4" />
-                                  <span>Español</span>
-                                </div>
-                              ), sublabel: "Spanish"
-                            },
-                            {
-                              value: "en", label: (
-                                <div className="flex items-center gap-1.5">
-                                  <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1fa-1f1f8.png" alt="US" className="w-4 h-4" />
-                                  <span>English</span>
-                                </div>
-                              ), sublabel: "US"
-                            },
-                            {
-                              value: "fr", label: (
-                                <div className="flex items-center gap-1.5">
-                                  <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1eb-1f1f7.png" alt="FR" className="w-4 h-4" />
-                                  <span>Français</span>
-                                </div>
-                              ), sublabel: "French"
-                            },
+                            { value: "en", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1fa-1f1f8.png" alt="US" className="w-4 h-4" /><span>English</span></div>), sublabel: "US" },
+                            { value: "es", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ea-1f1f8.png" alt="ES" className="w-4 h-4" /><span>Español</span></div>), sublabel: "Spanish" },
+                            { value: "fr", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1eb-1f1f7.png" alt="FR" className="w-4 h-4" /><span>Français</span></div>), sublabel: "French" },
+                            { value: "zh", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1e8-1f1f3.png" alt="CN" className="w-4 h-4" /><span>Chinese</span></div>), sublabel: "Mandarin" },
+                            { value: "hi", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ee-1f1f3.png" alt="IN" className="w-4 h-4" /><span>Hindi</span></div>), sublabel: "India" },
+                            { value: "ar", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f8-1f1e6.png" alt="SA" className="w-4 h-4" /><span>Arabic</span></div>), sublabel: "General" },
+                            { value: "pt", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1e7-1f1f7.png" alt="BR" className="w-4 h-4" /><span>Português</span></div>), sublabel: "Brazil" },
+                            { value: "ru", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f7-1f1fa.png" alt="RU" className="w-4 h-4" /><span>Russian</span></div>), sublabel: "Russia" },
+                            { value: "de", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1e9-1f1ea.png" alt="DE" className="w-4 h-4" /><span>Deutsch</span></div>), sublabel: "German" },
+                            { value: "ja", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ef-1f1f5.png" alt="JP" className="w-4 h-4" /><span>Japanese</span></div>), sublabel: "Japan" },
+                            { value: "id", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ee-1f1e9.png" alt="ID" className="w-4 h-4" /><span>Indonesian</span></div>), sublabel: "Indonesia" },
+                            { value: "ko", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f0-1f1f7.png" alt="KR" className="w-4 h-4" /><span>Korean</span></div>), sublabel: "Korea" },
+                            { value: "it", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ee-1f1f9.png" alt="IT" className="w-4 h-4" /><span>Italiano</span></div>), sublabel: "Italian" },
+                            { value: "tr", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f9-1f1f7.png" alt="TR" className="w-4 h-4" /><span>Turkish</span></div>), sublabel: "Turkey" },
+                            { value: "nl", label: (<div className="flex items-center gap-1.5"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1f3-1f1f1.png" alt="NL" className="w-4 h-4" /><span>Dutch</span></div>), sublabel: "Netherl." },
                           ]}
                           value={form.language}
                           onChange={(val) => {

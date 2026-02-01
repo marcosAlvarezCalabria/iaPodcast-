@@ -3,6 +3,8 @@
 > **Transform ideas into professional audio podcasts instantly.**  
 > Powered by **Groq (Llama 3)** for script generation and **Google Cloud Neural2 TTS** for lifelike voices.
 
+🌐 **Live Demo**: [https://iapodcast.pages.dev](https://iapodcast.pages.dev)
+
 ![Project Status](https://img.shields.io/badge/Status-Beta-orange)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)

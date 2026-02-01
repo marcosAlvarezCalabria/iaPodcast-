@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, MouseEvent } from "react";
 import { WheelPicker } from "./components/WheelPicker";
 
-type Language = "es" | "en" | "fr";
+type Language = "es" | "en" | "fr" | "zh" | "hi" | "ar" | "pt" | "ru" | "de" | "ja" | "id" | "ko" | "it" | "tr" | "nl";
 
 
 type ContentType = "reflection" | "summary" | "story" | "explanation";
@@ -52,6 +52,42 @@ const VOICES = [
   { id: "fr-FR-Neural2-A", label: "Marie", lang: "fr", gender: "Female", desc: "Soft" },
   { id: "fr-FR-Neural2-D", label: "Pierre", lang: "fr", gender: "Male", desc: "Deep" },
   { id: "fr-FR-Wavenet-C", label: "Sophie", lang: "fr", gender: "Female", desc: "Warm" },
+  // Chinese (Mandarin)
+  { id: "cmn-CN-Wavenet-C", label: "Li", lang: "zh", gender: "Male", desc: "Balanced" },
+  { id: "cmn-CN-Wavenet-A", label: "Mei", lang: "zh", gender: "Female", desc: "Clear" },
+  // Hindi
+  { id: "hi-IN-Neural2-B", label: "Arjun", lang: "hi", gender: "Male", desc: "Clear" },
+  { id: "hi-IN-Neural2-A", label: "Ananya", lang: "hi", gender: "Female", desc: "Soft" },
+  // Arabic
+  { id: "ar-XA-Wavenet-B", label: "Omar", lang: "ar", gender: "Male", desc: "Deep" },
+  { id: "ar-XA-Wavenet-A", label: "Fatima", lang: "ar", gender: "Female", desc: "Detailed" },
+  // Portuguese (Brazil)
+  { id: "pt-BR-Neural2-B", label: "Tiago", lang: "pt", gender: "Male", desc: "Friendly" },
+  { id: "pt-BR-Neural2-A", label: "Camila", lang: "pt", gender: "Female", desc: "Vibrant" },
+  // Russian
+  { id: "ru-RU-Wavenet-B", label: "Dmitry", lang: "ru", gender: "Male", desc: "Narrator" },
+  { id: "ru-RU-Wavenet-A", label: "Svetlana", lang: "ru", gender: "Female", desc: "Warm" },
+  // German
+  { id: "de-DE-Neural2-B", label: "Klaus", lang: "de", gender: "Male", desc: "Professional" },
+  { id: "de-DE-Neural2-F", label: "Hannah", lang: "de", gender: "Female", desc: "Soft" },
+  // Japanese
+  { id: "ja-JP-Neural2-C", label: "Takumi", lang: "ja", gender: "Male", desc: "Balanced" },
+  { id: "ja-JP-Neural2-B", label: "Akari", lang: "ja", gender: "Female", desc: "Clear" },
+  // Indonesian
+  { id: "id-ID-Wavenet-B", label: "Budi", lang: "id", gender: "Male", desc: "Deep" },
+  { id: "id-ID-Wavenet-A", label: "Siti", lang: "id", gender: "Female", desc: "Friendly" },
+  // Korean
+  { id: "ko-KR-Neural2-C", label: "Min", lang: "ko", gender: "Male", desc: "Modern" },
+  { id: "ko-KR-Neural2-A", label: "Ji-Woo", lang: "ko", gender: "Female", desc: "Soft" },
+  // Italian
+  { id: "it-IT-Neural2-C", label: "Marco", lang: "it", gender: "Male", desc: "Deep" },
+  { id: "it-IT-Neural2-A", label: "Chiara", lang: "it", gender: "Female", desc: "Vibrant" },
+  // Turkish
+  { id: "tr-TR-Wavenet-B", label: "Emre", lang: "tr", gender: "Male", desc: "Clear" },
+  { id: "tr-TR-Wavenet-A", label: "Aylin", lang: "tr", gender: "Female", desc: "Warm" },
+  // Dutch
+  { id: "nl-NL-Wavenet-B", label: "Lars", lang: "nl", gender: "Male", desc: "Friendly" },
+  { id: "nl-NL-Wavenet-A", label: "Lotte", lang: "nl", gender: "Female", desc: "Soft" },
 ];
 
 export default function Home() {

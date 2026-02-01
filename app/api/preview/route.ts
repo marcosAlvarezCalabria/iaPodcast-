@@ -34,7 +34,7 @@ export async function POST(request: Request) {
         });
 
         // Return audio
-        return new NextResponse(result.audio as any, {
+        return new NextResponse(new Blob([new Uint8Array(result.audio)]), {
             headers: {
                 "Content-Type": "audio/mpeg",
                 "Content-Length": result.audio.length.toString(),

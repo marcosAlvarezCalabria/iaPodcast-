@@ -4,7 +4,7 @@ import { useRef, useEffect, useCallback, useState } from "react";
 
 interface WheelPickerOption {
   value: string;
-  label: string;
+  label: React.ReactNode;
   sublabel?: string;
 }
 
@@ -253,9 +253,8 @@ export function WheelPicker({
           >
             <div className="text-center">
               <span
-                className={`text-base font-bold transition-colors ${
-                  option.value === value ? "text-primary" : "text-[#e8ddd0]"
-                }`}
+                className={`text-base font-bold transition-colors ${option.value === value ? "text-primary" : "text-[#e8ddd0]"
+                  }`}
               >
                 {option.label}
               </span>

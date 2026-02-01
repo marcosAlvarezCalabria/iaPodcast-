@@ -563,9 +563,30 @@ export default function Home() {
                       <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner">
                         <WheelPicker
                           options={[
-                            { value: "es", label: "🇪🇸 Español", sublabel: "Spanish" },
-                            { value: "en", label: "🇺🇸 English", sublabel: "US" },
-                            { value: "fr", label: "🇫🇷 Français", sublabel: "French" },
+                            {
+                              value: "es", label: (
+                                <div className="flex items-center gap-1.5">
+                                  <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ea-1f1f8.png" alt="ES" className="w-4 h-4" />
+                                  <span>Español</span>
+                                </div>
+                              ), sublabel: "Spanish"
+                            },
+                            {
+                              value: "en", label: (
+                                <div className="flex items-center gap-1.5">
+                                  <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1fa-1f1f8.png" alt="US" className="w-4 h-4" />
+                                  <span>English</span>
+                                </div>
+                              ), sublabel: "US"
+                            },
+                            {
+                              value: "fr", label: (
+                                <div className="flex items-center gap-1.5">
+                                  <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1eb-1f1f7.png" alt="FR" className="w-4 h-4" />
+                                  <span>Français</span>
+                                </div>
+                              ), sublabel: "French"
+                            },
                           ]}
                           value={form.language}
                           onChange={(val) => {
@@ -579,7 +600,7 @@ export default function Home() {
                       </div>
 
                       {/* Voice Wheel */}
-                      <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner">
+                      <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner relative">
                         <WheelPicker
                           options={VOICES.filter(v => v.lang === form.language).map(v => ({
                             value: v.id,

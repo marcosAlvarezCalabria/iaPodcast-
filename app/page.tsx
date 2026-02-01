@@ -606,28 +606,33 @@ export default function Home() {
                       {/* Voice Wheel */}
                       <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner relative">
                         <WheelPicker
-                          options={VOICES.filter(v => v.lang === form.language).map(v => ({
-                            value: v.id,
-                            label: (
-                              <div className="flex items-center justify-between w-full px-2">
-                                <span>{v.label}</span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    playPreview(v.id);
-                                  }}
-                                  className="w-6 h-6 rounded-full bg-primary/20 hover:bg-primary/40 text-primary flex items-center justify-center transition-all active:scale-95 ml-2"
-                                  title="Preview Voice"
-                                >
-                                  <span className="material-symbols-outlined text-sm">
-                                    play_arrow
-                                  </span>
-                                </button>
-                              </div>
-                            ),
-                            sublabel: `${v.gender} · ${v.desc}`,
-                          }))}
+                          options={VOICES.filter(v => v.lang === form.language).map(v => {
+                            const isSelected = v.id === (form.voice || VOICES.find(x => x.lang === form.language)?.id);
+                            return {
+                              value: v.id,
+                              label: (
+                                <div className="flex items-center justify-between w-full px-2">
+                                  <span>{v.label}</span>
+                                  {isSelected && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        playPreview(v.id);
+                                      }}
+                                      className="w-6 h-6 rounded-full bg-primary/20 hover:bg-primary/40 text-primary flex items-center justify-center transition-all active:scale-95 ml-2"
+                                      title="Preview Voice"
+                                    >
+                                      <span className="material-symbols-outlined text-sm">
+                                        {isPlayingPreview && previewAudioRef.current && !previewAudioRef.current.paused ? "stop" : "play_arrow"}
+                                      </span>
+                                    </button>
+                                  )}
+                                </div>
+                              ),
+                              sublabel: `${v.gender} · ${v.desc}`,
+                            };
+                          })}
                           value={form.voice || VOICES.find(v => v.lang === form.language)?.id || ""}
                           onChange={(val) => updateField("voice", val)}
                           itemHeight={38}

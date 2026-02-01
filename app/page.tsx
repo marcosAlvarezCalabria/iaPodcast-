@@ -5,49 +5,7 @@ import { WheelPicker } from "./components/WheelPicker";
 
 type Language = "es" | "en" | "fr";
 
-// Web Speech API types
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-  resultIndex: number;
-}
 
-interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionResult {
-  length: number;
-  item(index: number): SpeechRecognitionAlternative;
-  [index: number]: SpeechRecognitionAlternative;
-  isFinal: boolean;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  abort(): void;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: Event & { error: string }) => void) | null;
-  onend: (() => void) | null;
-  onstart: (() => void) | null;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
 type ContentType = "reflection" | "summary" | "story" | "explanation";
 type AppState = "form" | "generating" | "done" | "error";
 
@@ -119,109 +77,89 @@ export default function Home() {
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Speech recognition state
-  const [isListening, setIsListening] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // Recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   // EventSource ref for SSE connection
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  // Check if speech recognition is supported
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    setSpeechSupported(!!SpeechRecognition);
-  }, []);
+  // Start recording (Hold down)
+  const startRecording = useCallback(async (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault(); // Prevent ghost clicks
+    if (isRecording || isTranscribing) return;
 
-  // Language mapping for speech recognition
-  const getSpeechLang = useCallback((lang: Language): string => {
-    const langMap: Record<Language, string> = {
-      es: "es-ES",
-      en: "en-US",
-      fr: "fr-FR",
-    };
-    return langMap[lang];
-  }, []);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
 
-  // Use a ref to capture text even if 'isFinal' never fires (common iOS bug)
-  const transcriptRef = useRef("");
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
 
-  // Start speech recognition (Hold down)
-  const startListening = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault(); // Prevent ghost clicks / text selection
-    if (!speechSupported || isListening) return;
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Microphone access denied or not available");
+    }
+  }, [isRecording, isTranscribing]);
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+  // Stop recording and transcribe (Release)
+  const stopRecording = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    if (!mediaRecorderRef.current || !isRecording) return;
 
-    // Configuration for Hold-to-Talk:
-    // continuous: true usually better for hold, but on iOS false + restarting might be safer.
-    // However, for "Hold", the user defines the session. let's stick to the robust config we found.
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = getSpeechLang(form.language);
+    const recorder = mediaRecorderRef.current;
 
-    transcriptRef.current = "";
+    recorder.onstop = async () => {
+      // Create blob from chunks
+      const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
 
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
+      // Stop tracks to release microphone
+      recorder.stream.getTracks().forEach((track) => track.stop());
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let currentInterim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          const text = result[0].transcript;
+      setIsRecording(false);
+      setIsTranscribing(true);
+
+      try {
+        const formData = new FormData();
+        formData.append("file", blob, "recording.webm");
+        formData.append("language", form.language);
+
+        const res = await fetch("/api/transcribe", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          throw new Error("Transcription failed");
+        }
+
+        const data = await res.json();
+        if (data.text) {
           setForm((prev) => ({
             ...prev,
-            topic: prev.topic + (prev.topic ? " " : "") + text,
+            topic: prev.topic + (prev.topic ? " " : "") + data.text,
           }));
-          transcriptRef.current = "";
-        } else {
-          currentInterim += result[0].transcript;
         }
-      }
-      if (currentInterim) {
-        transcriptRef.current = currentInterim;
-      }
-    };
-
-    recognition.onerror = (event) => {
-      if (event.error === "no-speech" || event.error === "aborted") {
-        return; // Silent fail on abort
-      }
-      console.error("Speech error:", event.error);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      // Fallback save on stop
-      if (transcriptRef.current.trim()) {
-        setForm((prev) => ({
-          ...prev,
-          topic: prev.topic + (prev.topic ? " " : "") + transcriptRef.current,
-        }));
-        transcriptRef.current = "";
+      } catch (error) {
+        console.error("Transcription error", error);
+      } finally {
+        setIsTranscribing(false);
+        mediaRecorderRef.current = null;
+        chunksRef.current = [];
       }
     };
 
-    recognitionRef.current = recognition;
-    try {
-      recognition.start();
-    } catch (err) {
-      console.error("Failed to start recognition:", err);
-    }
-  }, [speechSupported, isListening, form.language, getSpeechLang]);
-
-  // Stop speech recognition (Release)
-  const stopListening = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    if (!isListening || !recognitionRef.current) return;
-    recognitionRef.current.stop();
-    // setIsListening(false); // Let onend handle UI update
-  }, [isListening]);
+    recorder.stop();
+  }, [isRecording, form.language]);
 
   const audioUrl = jobId && appState === "done" ? `/api/jobs/${jobId}/audio` : undefined;
 
@@ -466,7 +404,7 @@ export default function Home() {
                     <div className="glass-input rounded-xl md:rounded-lg p-2 sm:p-3">
                       <textarea
                         className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-10 md:h-14 p-0 text-sm md:text-sm font-normal leading-snug outline-none"
-                        placeholder={isListening ? "Listening..." : "What should the AI talk about?"}
+                        placeholder={isRecording ? "Recording..." : isTranscribing ? "Processing..." : "What should the AI talk about?"}
                         value={form.topic}
                         onChange={(e) => updateField("topic", e.target.value)}
                       ></textarea>
@@ -475,41 +413,43 @@ export default function Home() {
                 </div>
 
                 {/* Middle section: Mic Button - Hold to Speak */}
-                {speechSupported && (
-                  <div className="flex flex-col items-center py-1 sm:py-4">
-                    <button
-                      type="button"
-                      onMouseDown={startListening}
-                      onMouseUp={stopListening}
-                      onMouseLeave={stopListening}
-                      onTouchStart={startListening}
-                      onTouchEnd={stopListening}
-                      // Prevent context menu on long press
-                      onContextMenu={(e) => e.preventDefault()}
-                      className={`
+                <div className="flex flex-col items-center py-1 sm:py-4">
+                  <button
+                    type="button"
+                    onMouseDown={startRecording}
+                    onMouseUp={stopRecording}
+                    onMouseLeave={stopRecording}
+                    onTouchStart={startRecording}
+                    onTouchEnd={stopRecording}
+                    // Prevent context menu on long press
+                    onContextMenu={(e) => e.preventDefault()}
+                    className={`
                         size-14 sm:size-20 rounded-2xl flex items-center justify-center transition-all shadow-lg select-none
-                        ${isListening
-                          ? "bg-red-500 text-white scale-95 ring-4 ring-red-500/30"
+                        ${isRecording
+                        ? "bg-red-500 text-white scale-95 ring-4 ring-red-500/30"
+                        : isTranscribing
+                          ? "bg-amber-500/20 text-white animate-pulse active:scale-95"
                           : "bg-transparent shadow-amber-500/20 hover:scale-105 active:scale-95"
-                        }
+                      }
                       `}
-                      title="Hold to speak"
-                    >
-                      {isListening ? (
-                        <span className="material-symbols-outlined text-2xl sm:text-3xl animate-pulse">mic</span>
-                      ) : (
-                        <img
-                          src="/logo_mic_v2.png"
-                          alt="Start Rec"
-                          className="w-full h-full object-cover rounded-2xl shadow-sm border-2 border-primary/20 pointer-events-none"
-                        />
-                      )}
-                    </button>
-                    <span className="text-[9px] text-[#7a6a5a] mt-1 uppercase tracking-wider font-medium select-none">
-                      {isListening ? "Release to stop" : "Hold to speak"}
-                    </span>
-                  </div>
-                )}
+                    title="Hold to speak"
+                  >
+                    {isRecording ? (
+                      <span className="material-symbols-outlined text-2xl sm:text-3xl animate-pulse">mic</span>
+                    ) : isTranscribing ? (
+                      <span className="material-symbols-outlined text-2xl sm:text-3xl animate-spin">sync</span>
+                    ) : (
+                      <img
+                        src="/logo_mic_v2.png"
+                        alt="Start Rec"
+                        className="w-full h-full object-cover rounded-2xl shadow-sm border-2 border-primary/20 pointer-events-none"
+                      />
+                    )}
+                  </button>
+                  <span className="text-[9px] text-[#7a6a5a] mt-1 uppercase tracking-wider font-medium select-none">
+                    {isRecording ? "Release to stop" : isTranscribing ? "Transcribing..." : "Hold to speak"}
+                  </span>
+                </div>
 
                 {/* Bottom section: Style + Language/Voice */}
                 <div className="flex flex-col">

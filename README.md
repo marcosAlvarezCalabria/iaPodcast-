@@ -7,6 +7,16 @@
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black)
 ![Cloudflare](https://img.shields.io/badge/Deployed%20on-Cloudflare-f38020)
+![Cloudflare](https://img.shields.io/badge/Deployed%20on-Cloudflare-f38020)
+
+## 🎓 About This Project
+
+This project was developed as part of my **Master's in AI Software Development**. It serves as a practical exploration of:
+- Integrating Large Language Models (LLMs) into real-world applications.
+- Building full-stack AI applications with Next.js.
+- Implementing edge-compatible architectures.
+
+It represents my journey in mastering AI-driven development. 🚀
 
 ## ✨ Features
 

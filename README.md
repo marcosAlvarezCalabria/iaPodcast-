@@ -1,66 +1,71 @@
-# AI Voice Creator
+# 🎙️ AI Podcast Creator via WhatsApp Aesthetic
 
-Transform your ideas into professional AI-generated podcasts instantly.
+> **Transform ideas into professional audio podcasts instantly.**  
+> Powered by **Groq (Llama 3)** for script generation and **Google Cloud Neural2 TTS** for lifelike voices.
 
-**Live Demo:** [podcast.marcos-alvarez.dev](https://podcast.marcos-alvarez.dev)
+![Project Status](https://img.shields.io/badge/Status-Beta-orange)
+![License](https://img.shields.io/badge/License-MIT-blue)
+![Next.js](https://img.shields.io/badge/Next.js-15-black)
+![Cloudflare](https://img.shields.io/badge/Deployed%20on-Cloudflare-f38020)
 
-## Features
+## ✨ Features
 
-- Generate podcast scripts with AI (Groq/Llama)
-- Convert text to natural speech (Google Cloud TTS)
-- Multiple languages (English, Spanish, French)
-- Multiple voice options per language
-- Different content styles (Reflection, Summary, Story, Explanation)
-- Download generated audio as MP3
+- **🌍 Multi-Language Support**: Create podcasts in **15 languages**, including English, Spanish, French, Japanese, Russian, and more.
+- **🗣️ Premium Neural Voices**: Uses Google's advanced `Neural2` voices for ultra-realistic speech.
+- **⚡ Instant Generation**: Powered by Groq for sub-second script writing.
+- **🎨 Beautiful UI**: A "WhatsApp-style" chat aesthetic with 3D Wheel Pickers and smooth animations.
+- **🛑 Rate Limiting (Beta)**: Fair usage policy with cookie-based limits (4 generations/user).
+- **📊 Usage Analytics**: Built-in audit logs for tracking token/character costs via Cloudflare.
 
-## Tech Stack
+## 🚀 Tech Stack
 
-- **Framework:** Next.js 16 with App Router
-- **Styling:** Tailwind CSS 4
-- **LLM:** Groq (Llama models)
-- **TTS:** Google Cloud Text-to-Speech
-- **Storage:** Supabase Storage
-- **Deployment:** Cloudflare Pages
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Directory)
+- **Deployment**: [Cloudflare Pages](https://pages.cloudflare.com/) (Edge Runtime)
+- **LLM Provider**: [Groq](https://groq.com/) (Llama 3 70B)
+- **TTS Provider**: [Google Cloud](https://cloud.google.com/text-to-speech)
+- **Styling**: Tailwind CSS + Custom CSS Modules
+- **Testing**: Jest + Playwright
 
-## Getting Started
+## 🛠️ Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- npm or pnpm
-
-### Environment Variables
-
-Create a `.env` file based on `.env.example`:
-
-```env
-LLM_PROVIDER=groq
-TTS_PROVIDER=google
-
-GROQ_API_KEY=your_groq_api_key
-GOOGLE_TTS_API_KEY=your_google_tts_api_key
-
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_key
-```
+- API Keys for **Groq** and **Google Cloud**
 
 ### Installation
 
+1. **Clone the repo**
+   ```bash
+   git clone https://github.com/marcosAlvarezCalabria/iaPodcast-.git
+   cd iaPodcast-
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) to see the app.
+
+## 🧪 Testing
+
+Run unit tests:
 ```bash
-npm install
-npm run dev
+npm test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the app.
-
-### Deployment
-
-Deploy to Cloudflare Pages:
-
+Run E2E tests (requires running server):
 ```bash
-npm run pages:build
+npx playwright test
 ```
 
-## License
+## 📈 Analytics & Costs
 
-MIT
+The application automatically logs usage metrics to the server console (Cloudflare Logs) for every generation event (`USAGE_SUMMARY`), tracking:
+- **Groq Tokens** (Input/Output)
+- **Google TTS Characters**
+
+---
+
+Made with ❤️ by [Marcos Alvarez](https://github.com/marcosAlvarezCalabria)

@@ -563,9 +563,9 @@ export default function Home() {
                       <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner">
                         <WheelPicker
                           options={[
-                            { value: "es", label: "Español", sublabel: "Spanish" },
-                            { value: "en", label: "English", sublabel: "US" },
-                            { value: "fr", label: "Français", sublabel: "French" },
+                            { value: "es", label: "🇪🇸 Español", sublabel: "Spanish" },
+                            { value: "en", label: "🇺🇸 English", sublabel: "US" },
+                            { value: "fr", label: "🇫🇷 Français", sublabel: "French" },
                           ]}
                           value={form.language}
                           onChange={(val) => {

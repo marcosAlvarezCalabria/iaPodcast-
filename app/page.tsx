@@ -481,10 +481,10 @@ export default function Home() {
       )}
 
       {/* Main Container (iOS Safe Area handling) - Centered on desktop (Reduced top padding for mobile) */}
-      <div className="relative h-[100dvh] w-full max-w-md md:max-w-xl mx-auto flex flex-col px-5 pt-5 pb-3 sm:px-6 sm:pt-14 sm:pb-4">
+      <div className="relative h-[100dvh] w-full max-w-md md:max-w-xl mx-auto flex flex-col px-5 pt-5 pb-3 sm:px-6 sm:pt-6 sm:pb-4">
 
         {/* App Bar Area (Reduced margin) */}
-        <div className="flex items-center justify-between mb-1 sm:mb-4">
+        <div className="flex items-center justify-between mb-1 sm:mb-2">
           {appState !== "form" ? (
             <button
               onClick={reset}
@@ -528,7 +528,7 @@ export default function Home() {
                 {/* Top section: Headline + Topic */}
                 <div className="flex flex-col">
                   {/* Headline - Reduced margin (mb-1 vs mb-2) */}
-                  <div className="flex flex-col mb-1 sm:mb-4 text-center items-center justify-center gap-1">
+                  <div className="flex flex-col mb-1 sm:mb-2 text-center items-center justify-center gap-1">
                     <div className="text-center">
                       <h1 className="text-[#4a3a2a] text-lg sm:text-xl font-bold leading-none">Create Your Podcast</h1>
                       <p className="text-[#7a6a5a] text-[11px] sm:text-xs font-medium leading-none mt-1">Transform your ideas into audio</p>
@@ -540,7 +540,7 @@ export default function Home() {
                     <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1">Topic</label>
                     <div className="glass-input rounded-xl md:rounded-lg p-2 sm:p-3">
                       <textarea
-                        className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-10 md:h-14 p-0 text-sm md:text-sm font-normal leading-snug outline-none"
+                        className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-10 md:h-12 p-0 text-sm md:text-sm font-normal leading-snug outline-none"
                         placeholder={isRecording ? "Recording..." : isTranscribing ? "Processing..." : "What should the AI talk about?"}
                         value={form.topic}
                         onChange={(e) => updateField("topic", e.target.value)}
@@ -561,7 +561,7 @@ export default function Home() {
                     // Prevent context menu on long press
                     onContextMenu={(e) => e.preventDefault()}
                     className={`
-                        size-14 sm:size-20 rounded-2xl flex items-center justify-center transition-all shadow-lg select-none
+                        size-14 sm:size-16 rounded-2xl flex items-center justify-center transition-all shadow-lg select-none
                         ${isRecording
                         ? "bg-red-500 text-white scale-95 ring-4 ring-red-500/30"
                         : isTranscribing
@@ -599,7 +599,7 @@ export default function Home() {
                           key={type.value}
                           onClick={() => updateField("contentType", type.value)}
                           className={`
-                                          rounded-lg md:rounded-lg p-1 sm:p-1.5 flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-center transition-all cursor-pointer border-2 h-10 md:h-12
+                                          rounded-lg md:rounded-lg p-1 sm:p-1.5 flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-center transition-all cursor-pointer border-2 h-10 md:h-10
                                           ${form.contentType === type.value
                               ? "bg-primary/10 border-primary"
                               : "bg-white border-transparent shadow-sm hover:border-primary/30"
@@ -645,7 +645,7 @@ export default function Home() {
                             const firstVoice = VOICES.find(v => v.lang === val);
                             if (firstVoice) updateField("voice", firstVoice.id);
                           }}
-                          itemHeight={60}
+                          itemHeight={50}
                           visibleItems={3}
                         />
                       </div>
@@ -682,7 +682,7 @@ export default function Home() {
                           })}
                           value={form.voice || VOICES.find(v => v.lang === form.language)?.id || ""}
                           onChange={(val) => updateField("voice", val)}
-                          itemHeight={60}
+                          itemHeight={50}
                           visibleItems={3}
                         />
                       </div>

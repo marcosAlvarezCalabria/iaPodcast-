@@ -524,7 +524,7 @@ export default function Home() {
           {appState === "form" && (
             <>
               {/* Scrollable Form Area - Reduced Gap (gap-2 vs gap-3) */}
-              <div className="flex-1 flex flex-col justify-start -mx-1 px-1 pb-2 overflow-y-auto no-scrollbar gap-2 sm:gap-4">
+              <div className="flex-1 flex flex-col justify-start -mx-1 px-1 pb-2 overflow-y-auto no-scrollbar gap-2 sm:gap-4 min-h-0">
 
                 {/* Top: Headline */}
                 <div className="flex flex-col mb-1 sm:mb-2 text-center items-center justify-center gap-1">
@@ -597,7 +597,7 @@ export default function Home() {
                         key={type.value}
                         onClick={() => updateField("contentType", type.value)}
                         className={`
-                                        flex-none w-24 md:w-auto rounded-xl p-2 md:p-2 flex flex-col items-center justify-center gap-1 text-center transition-all cursor-pointer border-2 h-16 md:h-20
+                                        flex-none w-20 md:w-auto rounded-xl p-2 md:p-2 flex flex-col items-center justify-center gap-1 text-center transition-all cursor-pointer border-2 h-16 md:h-20
                                         ${form.contentType === type.value
                             ? "bg-primary/10 border-primary"
                             : "bg-white/40 border-transparent shadow-sm hover:border-primary/30"
@@ -616,7 +616,7 @@ export default function Home() {
                 {/* Bottom: Language & Voice */}
                 <div className="mt-1">
                   <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1">Voice & Language</label>
-                  <div className="flex gap-2 sm:gap-4 h-32">
+                  <div className="flex gap-2 sm:gap-4 h-auto min-h-[160px]">
                     {/* Language Wheel */}
                     <div className="flex-1 rounded-xl overflow-hidden bg-[#1e1810] p-1 sm:p-2 shadow-inner">
                       <WheelPicker
@@ -720,7 +720,7 @@ export default function Home() {
                       Beta Limit Reached (4/4)
                     </p>
                     <p className="text-xs text-red-600">
-                      Want unlimited access? Contact us at <a href="mailto:beta@iapodcast.com" className="underline font-bold">beta@iapodcast.com</a> to unlock your account.
+                      Limit resets in 24 hours.
                     </p>
                   </div>
                 )}

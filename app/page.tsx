@@ -83,6 +83,10 @@ export default function Home() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  // Preview state
+  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+
   // EventSource ref for SSE connection
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -331,6 +335,49 @@ export default function Home() {
     }
   };
 
+  const playPreview = async () => {
+    if (isPlayingPreview && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.currentTime = 0;
+      setIsPlayingPreview(false);
+      return;
+    }
+
+    if (!form.voice) return;
+
+    try {
+      setIsPlayingPreview(true);
+      const res = await fetch("/api/preview", {
+        method: "POST",
+        body: JSON.stringify({ voiceId: form.voice }),
+      });
+
+      if (!res.ok) throw new Error("Preview failed");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      if (previewAudioRef.current) {
+        previewAudioRef.current.src = url;
+        previewAudioRef.current.play();
+        previewAudioRef.current.onended = () => setIsPlayingPreview(false);
+      } else {
+        const audio = new Audio(url);
+        audio.onended = () => setIsPlayingPreview(false);
+        audio.play();
+        // audio doesn't need ref if we don't plan to stop it mid-way with same button, 
+        // but for toggle we do. Let's rely on simple state for now.
+        // Actually, to toggle stop, we need the ref.
+        // Let's attach it to a temp ref if not using the DOM element ref (which we aren't for preview, usually).
+        // Since I defined previewAudioRef, I should assign it.
+        previewAudioRef.current = audio;
+      }
+    } catch (e) {
+      console.error(e);
+      setIsPlayingPreview(false);
+    }
+  };
+
   const handleShare = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (!audioUrl) return;
@@ -544,6 +591,21 @@ export default function Home() {
                           itemHeight={38}
                           visibleItems={3}
                         />
+
+                        {/* Preview Play Button Overlay */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            playPreview();
+                          }}
+                          className="absolute bottom-2 right-2 z-20 size-8 rounded-full bg-primary/20 hover:bg-primary/40 text-primary flex items-center justify-center backdrop-blur-sm transition-all active:scale-95"
+                          title="Preview Voice"
+                        >
+                          <span className="material-symbols-outlined text-lg">
+                            {isPlayingPreview ? "stop" : "play_arrow"}
+                          </span>
+                        </button>
                       </div>
                     </div>
                   </div>

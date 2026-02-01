@@ -357,6 +357,7 @@ export default function Home() {
   };
 
   const reset = () => {
+    fetchUsage(); // Refresh usage when starting over
     setAppState("form");
     setJobId(null);
     setProgress(0);

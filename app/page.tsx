@@ -146,22 +146,17 @@ export default function Home() {
   // Use a ref to capture text even if 'isFinal' never fires (common iOS bug)
   const transcriptRef = useRef("");
 
-  // Start/stop speech recognition
-  const toggleListening = useCallback(() => {
-    if (!speechSupported) return;
-
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      return;
-    }
+  // Start speech recognition (Hold down)
+  const startListening = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault(); // Prevent ghost clicks / text selection
+    if (!speechSupported || isListening) return;
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
-    // Key configuration for iOS Safari stability:
-    // continuous: false -> Stops automatically after one sentence (better reliability)
-    // interimResults: true -> Get feedback, but use 'onend' to save if 'isFinal' fails
+    // Configuration for Hold-to-Talk:
+    // continuous: true usually better for hold, but on iOS false + restarting might be safer.
+    // However, for "Hold", the user defines the session. let's stick to the robust config we found.
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = getSpeechLang(form.language);
@@ -173,24 +168,20 @@ export default function Home() {
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // Capture the latest transcript
       let currentInterim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
-          // If we actually get a final result, save it immediately
           const text = result[0].transcript;
           setForm((prev) => ({
             ...prev,
             topic: prev.topic + (prev.topic ? " " : "") + text,
           }));
-          transcriptRef.current = ""; // Clear ref since we saved it
+          transcriptRef.current = "";
         } else {
           currentInterim += result[0].transcript;
         }
       }
-
-      // Store interim in ref in case we need it at onend
       if (currentInterim) {
         transcriptRef.current = currentInterim;
       }
@@ -198,17 +189,15 @@ export default function Home() {
 
     recognition.onerror = (event) => {
       if (event.error === "no-speech" || event.error === "aborted") {
-        setIsListening(false);
-        return;
+        return; // Silent fail on abort
       }
-      console.error("Speech recognition error:", event.error);
+      console.error("Speech error:", event.error);
       setIsListening(false);
     };
 
     recognition.onend = () => {
       setIsListening(false);
-
-      // iOS Fallback: If we have text in the ref that wasn't saved (because isFinal didn't fire), save it now
+      // Fallback save on stop
       if (transcriptRef.current.trim()) {
         setForm((prev) => ({
           ...prev,
@@ -219,8 +208,20 @@ export default function Home() {
     };
 
     recognitionRef.current = recognition;
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (err) {
+      console.error("Failed to start recognition:", err);
+    }
   }, [speechSupported, isListening, form.language, getSpeechLang]);
+
+  // Stop speech recognition (Release)
+  const stopListening = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    if (!isListening || !recognitionRef.current) return;
+    recognitionRef.current.stop();
+    // setIsListening(false); // Let onend handle UI update
+  }, [isListening]);
 
   const audioUrl = jobId && appState === "done" ? `/api/jobs/${jobId}/audio` : undefined;
 
@@ -473,33 +474,39 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Middle section: Mic Button - Reduced size more (size-14 vs size-16) */}
+                {/* Middle section: Mic Button - Hold to Speak */}
                 {speechSupported && (
                   <div className="flex flex-col items-center py-1 sm:py-4">
                     <button
                       type="button"
-                      onClick={toggleListening}
+                      onMouseDown={startListening}
+                      onMouseUp={stopListening}
+                      onMouseLeave={stopListening}
+                      onTouchStart={startListening}
+                      onTouchEnd={stopListening}
+                      // Prevent context menu on long press
+                      onContextMenu={(e) => e.preventDefault()}
                       className={`
-                        size-14 sm:size-20 rounded-2xl flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95
+                        size-14 sm:size-20 rounded-2xl flex items-center justify-center transition-all shadow-lg select-none
                         ${isListening
-                          ? "bg-red-500 text-white animate-pulse shadow-red-500/30 rounded-full"
-                          : "bg-transparent shadow-amber-500/20"
+                          ? "bg-red-500 text-white scale-95 ring-4 ring-red-500/30"
+                          : "bg-transparent shadow-amber-500/20 hover:scale-105 active:scale-95"
                         }
                       `}
-                      title={isListening ? "Stop listening" : "Start voice input"}
+                      title="Hold to speak"
                     >
                       {isListening ? (
-                        <span className="material-symbols-outlined text-2xl sm:text-3xl">stop</span>
+                        <span className="material-symbols-outlined text-2xl sm:text-3xl animate-pulse">mic</span>
                       ) : (
                         <img
                           src="/logo_mic_v2.png"
                           alt="Start Rec"
-                          className="w-full h-full object-cover rounded-2xl shadow-sm border-2 border-primary/20"
+                          className="w-full h-full object-cover rounded-2xl shadow-sm border-2 border-primary/20 pointer-events-none"
                         />
                       )}
                     </button>
-                    <span className="text-[9px] text-[#7a6a5a] mt-1 uppercase tracking-wider font-medium">
-                      {isListening ? "Tap to stop" : "Tap to speak"}
+                    <span className="text-[9px] text-[#7a6a5a] mt-1 uppercase tracking-wider font-medium select-none">
+                      {isListening ? "Release to stop" : "Hold to speak"}
                     </span>
                   </div>
                 )}

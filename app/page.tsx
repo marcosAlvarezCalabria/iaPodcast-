@@ -331,6 +331,36 @@ export default function Home() {
     }
   };
 
+  const handleShare = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (!audioUrl) return;
+
+    try {
+      const res = await fetch(audioUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `${(jobTitle || form.topic || "podcast").replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp3`, { type: "audio/mpeg" });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: jobTitle || "My AI Podcast",
+          text: `Check out this podcast about ${form.topic}!`,
+          files: [file],
+        });
+      } else if (navigator.share) {
+        // Fallback to link sharing if file sharing not supported
+        await navigator.share({
+          title: jobTitle || "My AI Podcast",
+          text: `Check out this podcast about ${form.topic}!`,
+          url: window.location.href, // Or public URL if available
+        });
+      } else {
+        alert("Sharing is not supported on this device. Please download the file.");
+      }
+    } catch (err) {
+      console.error("Share failed", err);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-[#fbb751] to-[#f59e0b] overflow-hidden font-display">
       {audioUrl && (
@@ -710,16 +740,24 @@ export default function Home() {
                   </button>
                 </div>
 
-                {/* Download Action */}
-                <div className="flex justify-center mt-2">
+                {/* Download and Share Actions */}
+                <div className="flex justify-center mt-4 gap-3">
                   <a
                     href={audioUrl}
                     onClick={handleDownload}
-                    className="flex items-center gap-2 text-[#7a6a5a] text-sm font-bold hover:text-primary transition-colors px-4 py-2 rounded-lg hover:bg-orange-50/50 cursor-pointer"
+                    className="flex items-center gap-2 text-[#7a6a5a] text-sm font-bold hover:text-primary transition-colors px-4 py-2 rounded-lg hover:bg-orange-50/50 cursor-pointer bg-white/40 border border-white/50 shadow-sm"
                   >
                     <span className="material-symbols-outlined text-lg">download</span>
-                    Download MP3
+                    Download
                   </a>
+
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center gap-2 text-[#7a6a5a] text-sm font-bold hover:text-primary transition-colors px-4 py-2 rounded-lg hover:bg-orange-50/50 cursor-pointer bg-white/40 border border-white/50 shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-lg">share</span>
+                    Share
+                  </button>
                 </div>
               </div>
             </div>

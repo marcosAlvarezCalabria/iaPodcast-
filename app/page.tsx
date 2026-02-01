@@ -625,7 +625,7 @@ export default function Home() {
                             const firstVoice = VOICES.find(v => v.lang === val);
                             if (firstVoice) updateField("voice", firstVoice.id);
                           }}
-                          itemHeight={38}
+                          itemHeight={60}
                           visibleItems={3}
                         />
                       </div>
@@ -662,7 +662,7 @@ export default function Home() {
                           })}
                           value={form.voice || VOICES.find(v => v.lang === form.language)?.id || ""}
                           onChange={(val) => updateField("voice", val)}
-                          itemHeight={38}
+                          itemHeight={60}
                           visibleItems={3}
                         />
                       </div>

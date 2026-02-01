@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createGoogleTTSProvider } from "@/src/lib/providers/tts/google";
 
+export const runtime = 'edge';
+
 export async function POST(request: Request) {
     try {
         const { voiceId } = await request.json();

@@ -335,21 +335,25 @@ export default function Home() {
     }
   };
 
-  const playPreview = async () => {
+  const playPreview = async (previewVoiceId?: string) => {
+    // If we are playing specific voice that is already playing, stop it
     if (isPlayingPreview && previewAudioRef.current) {
       previewAudioRef.current.pause();
       previewAudioRef.current.currentTime = 0;
       setIsPlayingPreview(false);
-      return;
+      // If we clicked the same voice that was playing, just return (toggle off)
+      // If we clicked a different voice, we continue to play that new voice
+      if (!previewVoiceId || previewVoiceId === form.voice) return;
     }
 
-    if (!form.voice) return;
+    const voiceToPlay = previewVoiceId || form.voice;
+    if (!voiceToPlay) return;
 
     try {
       setIsPlayingPreview(true);
       const res = await fetch("/api/preview", {
         method: "POST",
-        body: JSON.stringify({ voiceId: form.voice }),
+        body: JSON.stringify({ voiceId: voiceToPlay }),
       });
 
       if (!res.ok) throw new Error("Preview failed");
@@ -604,7 +608,24 @@ export default function Home() {
                         <WheelPicker
                           options={VOICES.filter(v => v.lang === form.language).map(v => ({
                             value: v.id,
-                            label: v.label,
+                            label: (
+                              <div className="flex items-center justify-between w-full px-2">
+                                <span>{v.label}</span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    playPreview(v.id);
+                                  }}
+                                  className="w-6 h-6 rounded-full bg-primary/20 hover:bg-primary/40 text-primary flex items-center justify-center transition-all active:scale-95 ml-2"
+                                  title="Preview Voice"
+                                >
+                                  <span className="material-symbols-outlined text-sm">
+                                    play_arrow
+                                  </span>
+                                </button>
+                              </div>
+                            ),
                             sublabel: `${v.gender} · ${v.desc}`,
                           }))}
                           value={form.voice || VOICES.find(v => v.lang === form.language)?.id || ""}
@@ -612,21 +633,6 @@ export default function Home() {
                           itemHeight={38}
                           visibleItems={3}
                         />
-
-                        {/* Preview Play Button Overlay */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            playPreview();
-                          }}
-                          className="absolute bottom-2 right-2 z-20 size-8 rounded-full bg-primary/20 hover:bg-primary/40 text-primary flex items-center justify-center backdrop-blur-sm transition-all active:scale-95"
-                          title="Preview Voice"
-                        >
-                          <span className="material-symbols-outlined text-lg">
-                            {isPlayingPreview ? "stop" : "play_arrow"}
-                          </span>
-                        </button>
                       </div>
                     </div>
                   </div>

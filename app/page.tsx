@@ -99,6 +99,25 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [jobTitle, setJobTitle] = useState<string | null>(null);
 
+  // Usage Limit State
+  const [usageState, setUsageState] = useState<{ usage: number; limit: number } | null>(null);
+
+  const fetchUsage = async () => {
+    try {
+      const res = await fetch("/api/user-status");
+      if (res.ok) {
+        const data = await res.json();
+        setUsageState(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch usage:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsage();
+  }, []);
+
   // Analytics Helper
   // Define a type for the window object with gtag
   const sendEvent = (action: string, params?: Record<string, unknown>) => {
@@ -676,17 +695,43 @@ export default function Home() {
               <div className="flex-none pt-2 md:pt-2">
                 <button
                   onClick={onSubmit}
-                  disabled={!form.topic}
+                  disabled={!form.topic || (usageState !== null && usageState.usage >= usageState.limit)}
                   className={`
-                                clay-button w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 md:py-3 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 group relative overflow-hidden
-                                ${!form.topic ? "opacity-50 cursor-not-allowed" : ""}
-                            `}
+                    w-full py-3 md:py-4 px-6 rounded-xl font-bold text-lg md:text-xl shadow-lg
+                    transform transition-all active:scale-[0.98] flex items-center justify-center gap-2 md:gap-3
+                    ${!form.topic || (usageState !== null && usageState.usage >= usageState.limit)
+                      ? "bg-[#d4c5b5] text-[#8a7a6a] cursor-not-allowed shadow-none"
+                      : "bg-primary text-white hover:bg-primary/90 hover:shadow-primary/25 shadow-primary/20"
+                    }
+                  `}
                 >
-                  <span className="material-symbols-outlined text-xl md:text-lg">bolt</span>
-                  <span className="text-base md:text-sm">Generate Voice</span>
-                  {/* Subtle pulse effect overlay */}
-                  <div className="absolute inset-0 bg-white/20 opacity-0 group-active:opacity-100 transition-opacity"></div>
+                  {usageState && usageState.usage >= usageState.limit ? (
+                    <span>Limit Reached (4/4)</span>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined">auto_awesome</span>
+                      <span>Generate Podcast {usageState ? `(${usageState.usage}/${usageState.limit})` : ""}</span>
+                    </>
+                  )}
                 </button>
+
+                {/* Limit Warning / Contact Info */}
+                {usageState && usageState.usage >= usageState.limit && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-lg text-center">
+                    <p className="text-sm text-red-800 font-medium mb-1">
+                      Beta Limit Reached (4/4)
+                    </p>
+                    <p className="text-xs text-red-600">
+                      Want unlimited access? Contact us at <a href="mailto:beta@iapodcast.com" className="underline font-bold">beta@iapodcast.com</a> to unlock your account.
+                    </p>
+                  </div>
+                )}
+
+                {usageState && usageState.usage === usageState.limit - 1 && (
+                  <p className="text-center text-xs text-orange-600 mt-2 font-medium">
+                    ⚠️ This is your last free generation!
+                  </p>
+                )}
               </div>
             </>
           )}

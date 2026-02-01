@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { createJobId } from "@/src/lib/utils/ids";
 import { validateJobInput } from "@/src/lib/utils/validation";
 import { checkRateLimit } from "@/src/lib/utils/rateLimit";
@@ -24,6 +25,25 @@ export const POST = async (request: NextRequest) => {
         },
       );
     }
+
+    // Beta Limit Check (Cookie based)
+    const cookieStore = await cookies();
+    const usageCookie = cookieStore.get("podcast_usage");
+    const currentUsage = usageCookie ? parseInt(usageCookie.value) : 0;
+    const LIMIT = 4;
+
+    if (currentUsage >= LIMIT) {
+      return NextResponse.json(
+        { error: "Free beta limit reached", code: "LIMIT_EXCEEDED" },
+        { status: 403 }
+      );
+    }
+
+    // Increment usage
+    cookieStore.set("podcast_usage", (currentUsage + 1).toString(), {
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: "/",
+    });
 
     let payload: unknown;
     try {

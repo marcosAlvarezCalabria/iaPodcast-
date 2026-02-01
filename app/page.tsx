@@ -524,11 +524,11 @@ export default function Home() {
           {appState === "form" && (
             <>
               {/* Scrollable Form Area - Reduced Gap (gap-2 vs gap-3) */}
-              <div className="flex-1 flex flex-col justify-start -mx-1 px-1 pb-2 overflow-y-auto no-scrollbar gap-2 sm:gap-6">
+              <div className="flex-1 flex flex-col justify-start -mx-1 px-1 pb-2 overflow-y-auto no-scrollbar gap-2 sm:gap-4">
                 {/* Top section: Headline + Topic */}
                 <div className="flex flex-col">
                   {/* Headline - Reduced margin (mb-1 vs mb-2) */}
-                  <div className="flex flex-col mb-1 sm:mb-5 text-center items-center justify-center gap-1">
+                  <div className="flex flex-col mb-1 sm:mb-4 text-center items-center justify-center gap-1">
                     <div className="text-center">
                       <h1 className="text-[#4a3a2a] text-lg sm:text-xl font-bold leading-none">Create Your Podcast</h1>
                       <p className="text-[#7a6a5a] text-[11px] sm:text-xs font-medium leading-none mt-1">Transform your ideas into audio</p>
@@ -550,7 +550,7 @@ export default function Home() {
                 </div>
 
                 {/* Middle section: Mic Button - Hold to Speak */}
-                <div className="flex flex-col items-center py-1 sm:py-4">
+                <div className="flex flex-col items-center py-1 sm:py-2">
                   <button
                     type="button"
                     onMouseDown={startRecording}
@@ -591,7 +591,7 @@ export default function Home() {
                 {/* Bottom section: Style + Language/Voice */}
                 <div className="flex flex-col">
                   {/* Content Type Grid - Reduced Height (h-10) */}
-                  <div className="mb-3 sm:mb-4">
+                  <div className="mb-3 sm:mb-3">
                     <label className="block text-[#4a3a2a] text-[10px] md:text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-1.5 ml-1">Style</label>
                     <div className="grid grid-cols-4 gap-2 md:gap-2">
                       {contentTypes.map((type) => (

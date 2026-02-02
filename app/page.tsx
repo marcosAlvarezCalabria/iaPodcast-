@@ -629,13 +629,22 @@ export default function Home() {
                   {/* Row: Input + Mic */}
                   <div className="flex items-center gap-2">
                     {/* Text Area (Grows) */}
-                    <div className="glass-input rounded-xl p-2 sm:p-3 flex-1 transition-all focus-within:ring-2 focus-within:ring-primary/20">
+                    <div className="glass-input rounded-xl p-2 sm:p-3 flex-1 flex items-start gap-1 transition-all focus-within:ring-2 focus-within:ring-primary/20 relative">
                       <textarea
-                        className="w-full bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-12 md:h-14 p-0 text-sm md:text-sm font-normal leading-snug outline-none"
+                        className="flex-1 bg-transparent border-none focus:ring-0 text-[#4a3a2a] placeholder:text-[#a59585] resize-none h-12 md:h-14 p-0 text-sm md:text-sm font-normal leading-snug outline-none"
                         placeholder={isRecording ? "Recording..." : isTranscribing ? "Processing..." : "What shall we talk about?"}
                         value={form.topic}
                         onChange={(e) => updateField("topic", e.target.value)}
                       ></textarea>
+                      {form.topic && !isRecording && !isTranscribing && (
+                        <button
+                          onClick={() => updateField("topic", "")}
+                          className="flex-none p-1 rounded-full text-[#a59585] hover:bg-black/5 hover:text-[#4a3a2a] transition-colors"
+                          title="Clear text"
+                        >
+                          <span className="material-symbols-outlined text-lg">close</span>
+                        </button>
+                      )}
                     </div>
 
                     {/* Mic Button (Fixed) */}

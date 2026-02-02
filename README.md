@@ -25,7 +25,8 @@ It represents my journey in mastering AI-driven development. 🚀
 - **🌍 Multi-Language Support**: Create podcasts in **15 languages**, including English, Spanish, French, Japanese, Russian, and more.
 - **🗣️ Premium Neural Voices**: Uses Google's advanced `Neural2` voices for ultra-realistic speech.
 - **⚡ Instant Generation**: Powered by Groq for sub-second script writing.
-- **🎨 Beautiful UI**: A "WhatsApp-style" chat aesthetic with 3D Wheel Pickers and smooth animations.
+- **📱 WhatsApp-Style Aesthetic**: A familiar chat-based UI optimized for mobile, featuring a side-by-side input layout and "Walkie-Talkie" recording.
+- **🎙️ Server-Side Speech Recognition**: Robust voice-to-text recording (bypassing flaky browser speech APIs) for 100% reliability on iOS/Android.
 - **🛑 Rate Limiting (Beta)**: Fair usage policy with cookie-based limits (4 generations/user).
 - **📊 Usage Analytics**: Built-in audit logs for tracking token/character costs via Cloudflare.
 

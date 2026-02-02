@@ -145,9 +145,87 @@ export default function Home() {
   // EventSource ref for SSE connection
   const eventSourceRef = useRef<EventSource | null>(null);
 
+  // Audio Analysis Ref
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isSpeakingRef = useRef<boolean>(false);
+  const animationFrameRef = useRef<number | null>(null);
+
+  // Stop logic decoupled from event
+  const stopRecordingInternal = useCallback(async (shouldTranscribe = true) => {
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") return;
+
+    // Clear silence safeguards
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(console.error);
+      audioContextRef.current = null;
+    }
+
+    const recorder = mediaRecorderRef.current;
+
+    return new Promise<void>((resolve) => {
+      recorder.onstop = async () => {
+        setIsRecording(false);
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+
+        // Release tracks
+        recorder.stream.getTracks().forEach((track) => track.stop());
+        mediaRecorderRef.current = null;
+        chunksRef.current = [];
+
+        if (!shouldTranscribe) {
+          resolve();
+          return;
+        }
+
+        setIsTranscribing(true);
+
+        try {
+          // If the blob is tiny (empty), skip
+          if (blob.size < 1000) { // arbitrary small threshold for "silence" file
+            setIsTranscribing(false);
+            resolve();
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append("file", blob, "recording.webm");
+          formData.append("language", form.language);
+
+          const res = await fetch("/api/transcribe", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!res.ok) {
+            throw new Error("Transcription failed");
+          }
+
+          const data = await res.json();
+          if (data.text) {
+            setForm((prev) => ({
+              ...prev,
+              topic: prev.topic + (prev.topic ? " " : "") + data.text,
+            }));
+          }
+        } catch (error) {
+          console.error("Transcription error", error);
+        } finally {
+          setIsTranscribing(false);
+          resolve();
+        }
+      };
+
+      recorder.stop();
+    });
+  }, [form.language]); // Removed form.topic dependency
+
   // Start recording (Hold down)
   const startRecording = useCallback(async (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault(); // Prevent ghost clicks
+    e.preventDefault();
     if (isRecording || isTranscribing) return;
 
     try {
@@ -162,63 +240,73 @@ export default function Home() {
         }
       };
 
+      // Set up Audio Analysis for Silence Detection
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = audioContext;
+      const analyser = audioContext.createAnalyser();
+      analyserRef.current = analyser;
+      analyser.fftSize = 256;
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      let lastSpeechTime = Date.now();
+      isSpeakingRef.current = false;
+
+      const checkSilence = () => {
+        if (!analyserRef.current) return;
+        analyserRef.current.getByteFrequencyData(dataArray);
+
+        // Calculate average volume
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const average = sum / bufferLength;
+
+        // Threshold for "speech" (adjust as needed, usually > 10-15 is noise/speech)
+        const THRESHOLD = 10;
+
+        if (average > THRESHOLD) {
+          lastSpeechTime = Date.now();
+          isSpeakingRef.current = true;
+        }
+
+        // Check if silence exceeded 2 seconds (2000ms)
+        if (Date.now() - lastSpeechTime > 2000) {
+          // Stop logic
+          // If they never spoke, maybe cancel?
+          // User: "si pulsamos y pasan dos segundos sin decir nada este debraa pasar de nuevo a estado sin pulsar"
+          // AND "no deberia generar nada"
+          const userSpokeAtAll = isSpeakingRef.current;
+          stopRecordingInternal(userSpokeAtAll).then(() => {
+            // Done
+          });
+          return; // Stop loop
+        }
+
+        animationFrameRef.current = requestAnimationFrame(checkSilence);
+      };
+
       mediaRecorder.start();
       setIsRecording(true);
+      checkSilence();
+
     } catch (err) {
       console.error("Error accessing microphone:", err);
-      alert("Microphone access denied or not available");
+      // alert("Microphone access denied or not available");
     }
-  }, [isRecording, isTranscribing]);
+  }, [isRecording, isTranscribing, stopRecordingInternal]);
 
   // Stop recording and transcribe (Release)
   const stopRecording = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
-    if (!mediaRecorderRef.current || !isRecording) return;
-
-    const recorder = mediaRecorderRef.current;
-
-    recorder.onstop = async () => {
-      // Create blob from chunks
-      const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
-
-      // Stop tracks to release microphone
-      recorder.stream.getTracks().forEach((track) => track.stop());
-
-      setIsRecording(false);
-      setIsTranscribing(true);
-
-      try {
-        const formData = new FormData();
-        formData.append("file", blob, "recording.webm");
-        formData.append("language", form.language);
-
-        const res = await fetch("/api/transcribe", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) {
-          throw new Error("Transcription failed");
-        }
-
-        const data = await res.json();
-        if (data.text) {
-          setForm((prev) => ({
-            ...prev,
-            topic: prev.topic + (prev.topic ? " " : "") + data.text,
-          }));
-        }
-      } catch (error) {
-        console.error("Transcription error", error);
-      } finally {
-        setIsTranscribing(false);
-        mediaRecorderRef.current = null;
-        chunksRef.current = [];
-      }
-    };
-
-    recorder.stop();
-  }, [isRecording, form.language]);
+    stopRecordingInternal(true); // Always try to transcribe on manual release? Or verify silence?
+    // User expectation: manual release usually means "I'm done".
+    // But if they released after 0.1s it might be a click.
+  }, [stopRecordingInternal]);
 
   const audioUrl = jobId && appState === "done" ? `/api/jobs/${jobId}/audio` : undefined;
 

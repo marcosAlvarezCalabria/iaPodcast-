@@ -35,7 +35,40 @@ export async function POST(request: NextRequest) {
             temperature: 0.0,
         });
 
-        return NextResponse.json({ text: transcription.text });
+        const text = transcription.text?.trim() || "";
+
+        // Common Whisper hallucinations / silence artifacts
+        // Long phrases we can safely check with 'includes'
+        const PHRASE_HALLUCINATIONS = [
+            "Subtitle by Amara.org",
+            "Subtitles by",
+            "Amara.org",
+            "Thanks for watching",
+            "Thank you",
+            "Gracias",
+            "Suscríbete",
+            "MBC"
+        ];
+
+        // Short phrases that must match exactly (case-insensitive) to be filtered
+        const EXACT_HALLUCINATIONS = [
+            "you",
+            "bye",
+            ".",
+            ".."
+        ];
+
+        const lowerText = text.toLowerCase();
+
+        const isHallucination =
+            PHRASE_HALLUCINATIONS.some(h => lowerText.includes(h.toLowerCase())) ||
+            EXACT_HALLUCINATIONS.includes(lowerText);
+
+        if (isHallucination || text.length === 0) {
+            return NextResponse.json({ text: "" });
+        }
+
+        return NextResponse.json({ text });
     } catch (error) {
         console.error("Transcription error:", error);
         return NextResponse.json(

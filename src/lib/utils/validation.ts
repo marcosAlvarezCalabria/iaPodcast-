@@ -9,7 +9,7 @@ export const JobInputSchema = z.object({
     .min(0.5, "Duration must be at least 0.5 minutes")
     .max(10, "Duration must be at most 10 minutes")
     .default(1),
-  language: z.enum(["en", "es", "fr"]).default("en"),
+  language: z.enum(["en", "es", "fr", "pt", "ru", "de", "it", "tr", "nl", "zh", "hi", "ar", "ja", "id", "ko"]).default("en"),
   tone: z.nativeEnum(Tone).default(Tone.Informative),
   contentType: z.nativeEnum(ContentType).default(ContentType.Reflection),
   targetAudience: z.string().trim().default("general"),

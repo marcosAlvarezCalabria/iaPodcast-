@@ -9,8 +9,29 @@ import type {
 import { ContentType } from "../types";
 import type { LLMProvider } from "./LLMProvider";
 
+const getLanguageName = (code: string): string => {
+  const map: Record<string, string> = {
+    es: "Spanish",
+    en: "English",
+    fr: "French",
+    pt: "Portuguese",
+    ru: "Russian",
+    de: "German",
+    it: "Italian",
+    tr: "Turkish",
+    nl: "Dutch",
+    zh: "Chinese",
+    hi: "Hindi",
+    ar: "Arabic",
+    ja: "Japanese",
+    id: "Indonesian",
+    ko: "Korean",
+  };
+  return map[code] || "English";
+};
+
 const getContentTypePrompt = (contentType: ContentType, language: string) => {
-  const lang = language === "es" ? "Spanish" : language === "fr" ? "French" : "English";
+  const lang = getLanguageName(language);
 
   const prompts = {
     [ContentType.Reflection]: {
@@ -85,7 +106,7 @@ export const createGroqProvider = (): LLMProvider => {
 
       ctx?.logger?.debug("groq:generateOutline", { topic: req.topic });
 
-      const lang = req.language === "es" ? "Spanish" : req.language === "fr" ? "French" : "English";
+      const lang = getLanguageName(req.language);
 
       const systemPrompt = `You are a creative content strategist who finds the most interesting angle on any topic. You don't create generic content—you find the unexpected hook that makes people want to listen.`;
 
